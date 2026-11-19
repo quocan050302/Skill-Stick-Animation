@@ -1,0 +1,67 @@
+{
+  "generated_at_utc": "2026-11-19T01:51:45.575Z",
+  "three": {
+    "version": "0.160.0",
+    "license": "MIT",
+    "sha256": "76dea8151bc9352aef3528b4262e249b2604f62543828328db978d060d61a495",
+    "bytes": 1272972
+  },
+  "claude_animated_shorts": {
+    "repo": "https://github.com/mromidev/claude-animated-shorts.git",
+    "commit_sha": "e3b817b6afc6cd413466d43f11ba31209e034bbf",
+    "source_rel_path": "templates/bridge/toon.ts",
+    "toon_ts_sha256": "524f6dfa0c41d4976268636ce2c3ff910ca65a7bec04648f88d2588e803b9aa5",
+    "toon_ts_bytes": 55412,
+    "license_file": "LICENSE",
+    "fetched_at_utc": "2026-11-19T01:51:22.300Z"
+  },
+  "built_modules": {
+    "toonbase_js": {
+      "sha256": "afc0c1e8a7aa33248bac80909be4f3810a4b1ab228f6c158fcca05b9d7f36e4a",
+      "bytes": 55412,
+      "command": "module.stripTypeScriptTypes(toon.ts, { mode: 'strip' })"
+    },
+    "toon_js": {
+      "sha256": "823360b9ad4819affb04c1cfeda30ccafca49f625d7a7d3bfc8cbac0f1fdb973",
+      "bytes": 74393,
+      "command": "concat(engine/web/toonbase.js, engine/web/roman.js)"
+    }
+  },
+  "copied_kit_files": [
+    {
+      "dest": "engine/web/index.html",
+      "bytes": 361,
+      "sha256": "1f0bf31a7ac6b8768d308e076b0f08bbd2135287b535cf3a535c786c0c06812b"
+    },
+    {
+      "dest": "engine/web/main.js",
+      "bytes": 31418,
+      "sha256": "cedea9f4cccc747d3c54d1880f6434bdff1e6a9d1f1cfa5072d53d221aed1e56"
+    },
+    {
+      "dest": "engine/web/motion.js",
+      "bytes": 3826,
+      "sha256": "d895b4d0531fbd1126596e8a558801660edab305c7bfd2d0544dcb64c4e4ffcd"
+    },
+    {
+      "dest": "engine/web/paint.js",
+      "bytes": 11477,
+      "sha256": "90b342fc03a632aa192dc98debf2bcc2d6f8e33f5d3ffc2093360c1a90d65a71"
+    },
+    {
+      "dest": "engine/web/roman.js",
+      "bytes": 18980,
+      "sha256": "8d53a82332f8974289ccc07fef67ff42b1caee39c10f88480f56dab798b7a4bc"
+    },
+    {
+      "dest": "engine/web/story.js",
+      "bytes": 14033,
+      "sha256": "5ba77a6a909b84e69d19ea656a24bfc7cea33ef32ead14e748dd9e91eaa96322"
+    },
+    {
+      "dest": "engine/web/lib/three.module.js",
+      "bytes": 1272972,
+      "sha256": "76dea8151bc9352aef3528b4262e249b2604f62543828328db978d060d61a495"
+    }
+  ]
+}

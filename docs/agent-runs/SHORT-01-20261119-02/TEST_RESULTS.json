@@ -1,0 +1,169 @@
+{
+  "generated_at_utc": "2026-11-19T02:13:22.786849+00:00",
+  "cpu_count": 12,
+  "bounded_stage1_concurrency": 3,
+  "stage2_heavy_concurrency": 1,
+  "total_suites": 9,
+  "passed_suites": 9,
+  "failed_suites": 0,
+  "overall_status": "PASS",
+  "elapsed_total_ms": 9196.6,
+  "blocked_suites_missing_kit": [],
+  "suites": [
+    {
+      "id": "unit_audit_kit",
+      "category": "unit+negative",
+      "stage": 1,
+      "cmd": [
+        "C:\\Users\\QuocAn\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "-m",
+        "unittest",
+        "-v",
+        "tests/unit/test_audit_kit.py"
+      ],
+      "exit_code": 0,
+      "expected_exit": 0,
+      "status": "PASS",
+      "elapsed_ms": 326.3,
+      "stdout_tail": "",
+      "stderr_tail": "test_cli_reports_input_blocked_when_missing (tests.unit.test_audit_kit.TestAuditKit.test_cli_reports_input_blocked_when_missing) ... ok\r\ntest_rejects_absolute_and_drive_paths (tests.unit.test_audit_kit.TestAuditKit.test_rejects_absolute_and_drive_paths) ... ok\r\ntest_rejects_corrupt_and_non_zip (tests.unit.test_audit_kit.TestAuditKit.test_rejects_corrupt_and_non_zip) ... ok\r\ntest_rejects_duplicate_entries (tests.unit.test_audit_kit.TestAuditKit.test_rejects_duplicate_entries) ... C:\\Users\\QuocAn\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\zipfile\\__init__.py:1611: UserWarning: Duplicate name: 'cartoon-short-kit/a.js'\r\n  return self._open_to_write(zinfo, force_zip64=force_zip64)\r\nok\r\ntest_rejects_path_traversal_zip (tests.unit.test_audit_kit.TestAuditKit.test_rejects_path_traversal_zip) ... ok\r\ntest_rejects_symlink_entry (tests.unit.test_audit_kit.TestAuditKit.test_rejects_symlink_entry) ... ok\r\ntest_rejects_zip_bomb_ratio (tests.unit.test_audit_kit.TestAuditKit.test_rejects_zip_bomb_ratio) ... ok\r\ntest_valid_zip_audit_and_byte_identical_preservation (tests.unit.test_audit_kit.TestAuditKit.test_valid_zip_audit_and_byte_identical_preservation) ... ok\r\n\r\n----------------------------------------------------------------------\r\nRan 8 tests in 0.196s\r\n\r\nOK\r\n"
+    },
+    {
+      "id": "unit_safe_path_disk",
+      "category": "unit+negative",
+      "stage": 1,
+      "cmd": [
+        "C:\\Users\\QuocAn\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "-m",
+        "unittest",
+        "-v",
+        "tests/unit/test_safe_path_and_disk.py"
+      ],
+      "exit_code": 0,
+      "expected_exit": 0,
+      "status": "PASS",
+      "elapsed_ms": 141.9,
+      "stdout_tail": "",
+      "stderr_tail": "test_atomic_write_bytes_and_replace (tests.unit.test_safe_path_and_disk.TestSafePathAndDisk.test_atomic_write_bytes_and_replace) ... ok\r\ntest_disk_preflight_pass_and_low_space_negative (tests.unit.test_safe_path_and_disk.TestSafePathAndDisk.test_disk_preflight_pass_and_low_space_negative) ... ok\r\ntest_resolve_confined_accepts_nested_and_rejects_escape (tests.unit.test_safe_path_and_disk.TestSafePathAndDisk.test_resolve_confined_accepts_nested_and_rejects_escape) ... ok\r\ntest_safe_filename_validation (tests.unit.test_safe_path_and_disk.TestSafePathAndDisk.test_safe_filename_validation) ... ok\r\ntest_safe_rmtree_blocks_root_and_external_paths (tests.unit.test_safe_path_and_disk.TestSafePathAndDisk.test_safe_rmtree_blocks_root_and_external_paths) ... ok\r\n\r\n----------------------------------------------------------------------\r\nRan 5 tests in 0.032s\r\n\r\nOK\r\n"
+    },
+    {
+      "id": "unit_timing_contract",
+      "category": "unit+negative",
+      "stage": 1,
+      "cmd": [
+        "C:\\Users\\QuocAn\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "-m",
+        "unittest",
+        "-v",
+        "tests/unit/test_timing_contract.py"
+      ],
+      "exit_code": 0,
+      "expected_exit": 0,
+      "status": "PASS",
+      "elapsed_ms": 103.4,
+      "stdout_tail": "",
+      "stderr_tail": "test_expected_frame_count (tests.unit.test_timing_contract.TestTimingContract.test_expected_frame_count) ... ok\r\ntest_invalid_durations_rejected (tests.unit.test_timing_contract.TestTimingContract.test_invalid_durations_rejected) ... ok\r\ntest_negative_segment_cases (tests.unit.test_timing_contract.TestTimingContract.test_negative_segment_cases) ... ok\r\ntest_valid_segments_and_pause_extraction (tests.unit.test_timing_contract.TestTimingContract.test_valid_segments_and_pause_extraction) ... ok\r\n\r\n----------------------------------------------------------------------\r\nRan 4 tests in 0.000s\r\n\r\nOK\r\n"
+    },
+    {
+      "id": "unit_audio_mix",
+      "category": "unit+integration+negative",
+      "stage": 1,
+      "cmd": [
+        "C:\\Users\\QuocAn\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "-m",
+        "unittest",
+        "-v",
+        "tests/unit/test_audio_mix.py"
+      ],
+      "exit_code": 0,
+      "expected_exit": 0,
+      "status": "PASS",
+      "elapsed_ms": 539.4,
+      "stdout_tail": "",
+      "stderr_tail": "test_cli_roundtrip_wav (tests.unit.test_audio_mix.TestAudioMix.test_cli_roundtrip_wav) ... ok\r\ntest_gated_rms_ignores_silent_pauses (tests.unit.test_audio_mix.TestAudioMix.test_gated_rms_ignores_silent_pauses) ... ok\r\ntest_linear_minus_6db_ratio_no_ducking_and_peak_safety (tests.unit.test_audio_mix.TestAudioMix.test_linear_minus_6db_ratio_no_ducking_and_peak_safety) ... ok\r\ntest_negative_audio_cases (tests.unit.test_audio_mix.TestAudioMix.test_negative_audio_cases) ... ok\r\n\r\n----------------------------------------------------------------------\r\nRan 4 tests in 0.302s\r\n\r\nOK\r\n"
+    },
+    {
+      "id": "unit_node_contract_adapter",
+      "category": "unit+negative",
+      "stage": 1,
+      "cmd": [
+        "node",
+        "--test",
+        "tests/unit/test_contract_and_adapter.mjs"
+      ],
+      "exit_code": 0,
+      "expected_exit": 0,
+      "status": "PASS",
+      "elapsed_ms": 271.8,
+      "stdout_tail": "\u2714 contract accepts 9:16 1080x1920 30fps and rejects 16:9 or prohibited engines (1.1018ms)\n\u2714 frame range and duration validators reject invalid inputs (0.5634ms)\n\u2714 loopback server enforces 127.0.0.1 and rejects path traversal (39.6475ms)\n\u2714 renderer_adapter rejects original_engine with INPUT_BLOCKED when kit files absent (4.3888ms)\n\u2714 renderer_adapter detects missing Three.js dependency cleanly (1.1424ms)\n\u2714 disk preflight, resume validator, and finite retry enforce safety boundaries (48.8138ms)\n\u2714 local API server enforces loopback, contract validation, and honest INPUT_BLOCKED status (13.4584ms)\n\u2139 tests 7\n\u2139 suites 0\n\u2139 pass 7\n\u2139 fail 0\n\u2139 cancelled 0\n\u2139 skipped 0\n\u2139 todo 0\n\u2139 duration_ms 222.9309\n",
+      "stderr_tail": ""
+    },
+    {
+      "id": "unit_motion_story_modules",
+      "category": "unit",
+      "stage": 1,
+      "cmd": [
+        "node",
+        "--test",
+        "tests/unit/test_original_kit_modules.mjs"
+      ],
+      "exit_code": 0,
+      "expected_exit": 0,
+      "status": "PASS",
+      "elapsed_ms": 139.7,
+      "stdout_tail": "\u2714 new zombie-10s story covers exact 300 frames (10.00s @ 30fps) with finite, deterministic pure state (5.6255ms)\n\u2714 original kit motion.js & soldier story.js pass continuity, clamping, and determinism checks when restored locally (6.2421ms)\n\u2139 tests 2\n\u2139 suites 0\n\u2139 pass 2\n\u2139 fail 0\n\u2139 cancelled 0\n\u2139 skipped 0\n\u2139 todo 0\n\u2139 duration_ms 84.6977\n",
+      "stderr_tail": ""
+    },
+    {
+      "id": "env_safe_setup_verify",
+      "category": "preflight",
+      "stage": 2,
+      "cmd": [
+        "node",
+        "tools/setup/safe_setup.mjs"
+      ],
+      "exit_code": 0,
+      "expected_exit": 0,
+      "status": "PASS",
+      "elapsed_ms": 592.8,
+      "stdout_tail": "{\n  \"checked_at_utc\": \"2026-11-19T02:13:14.825Z\",\n  \"platform\": \"win32\",\n  \"arch\": \"x64\",\n  \"cpus\": 12,\n  \"total_ram_gb\": 31.75,\n  \"node\": {\n    \"version\": \"v26.13.1\",\n    \"meets_min_22_6\": true,\n    \"stripTypeScriptTypes\": true\n  },\n  \"three\": {\n    \"installed\": true,\n    \"version\": \"0.160.0\",\n    \"revision\": \"160\",\n    \"license\": \"MIT\",\n    \"pinned_match\": true\n  },\n  \"playwright\": {\n    \"installed\": true,\n    \"version\": \"1.65.1\",\n    \"license\": \"Apache-2.0\",\n    \"chromium_executable\": \"C:\\\\Users\\\\QuocAn\\\\AppData\\\\Local\\\\ms-playwright\\\\chromium-1255\\\\chrome-win64\\\\chrome.exe\",\n    \"chromium_exists\": true\n  },\n  \"python\": {\n    \"ok\": true,\n    \"version\": \"Python 3.12.10\",\n    \"packages\": {\n      \"numpy\": \"2.5.4\",\n      \"PIL\": \"13.0.0\",\n      \"scipy\": \"1.18.1\",\n      \"soundfile\": \"0.14.0\",\n      \"whisper\": null,\n      \"faster_whisper\": null\n    }\n  },\n  \"ffmpeg\": {\n    \"ok\": true,\n    \"banner\": \"ffmpeg version 9.0.2-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers\"\n  },\n  \"ffprobe\": {\n    \"ok\": true,\n    \"banner\": \"ffprobe version 9.0.2-full_build-www.gyan.dev Copyright (c) 2007-2026 the FFmpeg developers\"\n  },\n  \"original_engine_files\": {\n    \"all_present\": true,\n    \"files\": {\n      \"engine/web/index.html\": true,\n      \"engine/web/main.js\": true,\n      \"engine/web/motion.js\": true,\n      \"engine/web/paint.js\": true,\n      \"engine/web/roman.js\": true,\n      \"engine/web/story.js\": true,\n      \"engine/web/toon.js\": true\n    },\n    \"status\": \"READY\"\n  },\n  \"local_tooling_ready\": true\n}\n",
+      "stderr_tail": ""
+    },
+    {
+      "id": "regression_original_engine_parity",
+      "category": "regression+backtest",
+      "stage": 2,
+      "cmd": [
+        "C:\\Users\\QuocAn\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "-m",
+        "unittest",
+        "-v",
+        "tests/regression/test_original_engine_parity.py"
+      ],
+      "exit_code": 0,
+      "expected_exit": 0,
+      "status": "PASS",
+      "elapsed_ms": 305.1,
+      "stdout_tail": "",
+      "stderr_tail": "test_backtest_soldier_frame0_against_reference_stills_tile0 (tests.regression.test_original_engine_parity.TestOriginalEngineRegressionAndBacktest.test_backtest_soldier_frame0_against_reference_stills_tile0) ... ok\r\ntest_preserved_original_source_byte_integrity_unchanged (tests.regression.test_original_engine_parity.TestOriginalEngineRegressionAndBacktest.test_preserved_original_source_byte_integrity_unchanged) ... ok\r\ntest_soldier_audio_baseline_vs_skill_spec_divergence_documented (tests.regression.test_original_engine_parity.TestOriginalEngineRegressionAndBacktest.test_soldier_audio_baseline_vs_skill_spec_divergence_documented) ... ok\r\n\r\n----------------------------------------------------------------------\r\nRan 3 tests in 0.076s\r\n\r\nOK\r\n"
+    },
+    {
+      "id": "integration_webgl_and_ffmpeg",
+      "category": "integration+negative",
+      "stage": 2,
+      "cmd": [
+        "C:\\Users\\QuocAn\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "-m",
+        "unittest",
+        "-v",
+        "tests/integration/test_webgl_and_ffmpeg.py"
+      ],
+      "exit_code": 0,
+      "expected_exit": 0,
+      "status": "PASS",
+      "elapsed_ms": 7642.3,
+      "stdout_tail": "",
+      "stderr_tail": "test_cancellation_and_corrupt_resume_re_render (tests.integration.test_webgl_and_ffmpeg.TestWebGLAndFFmpegIntegration.test_cancellation_and_corrupt_resume_re_render) ... ok\r\ntest_negative_corrupt_image_black_frame_and_ffmpeg_failure (tests.integration.test_webgl_and_ffmpeg.TestWebGLAndFFmpegIntegration.test_negative_corrupt_image_black_frame_and_ffmpeg_failure) ... ok\r\ntest_real_webgl_smoke_pillow_qa_motion_and_ffmpeg_mp4 (tests.integration.test_webgl_and_ffmpeg.TestWebGLAndFFmpegIntegration.test_real_webgl_smoke_pillow_qa_motion_and_ffmpeg_mp4) ... ok\r\n\r\n----------------------------------------------------------------------\r\nRan 3 tests in 7.390s\r\n\r\nOK\r\n"
+    }
+  ]
+}

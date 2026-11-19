@@ -1,0 +1,310 @@
+{
+  "render_metadata": {
+    "generated_at_utc": "2026-11-19T02:14:09.044129+00:00",
+    "run_id": "SHORT-01-20261119-02",
+    "browser_version": "159.0.8154.6",
+    "launch_profile": "swiftshader-webgl",
+    "dependencies": {
+      "three": {
+        "version": "0.160.0",
+        "license": "MIT",
+        "sha256": "76dea8151bc9352aef3528b4262e249b2604f62543828328db978d060d61a495",
+        "bytes": 1272972
+      },
+      "claude_animated_shorts": {
+        "repo": "https://github.com/mromidev/claude-animated-shorts.git",
+        "commit_sha": "e3b817b6afc6cd413466d43f11ba31209e034bbf",
+        "source_rel_path": "templates/bridge/toon.ts",
+        "toon_ts_sha256": "524f6dfa0c41d4976268636ce2c3ff910ca65a7bec04648f88d2588e803b9aa5",
+        "toon_ts_bytes": 55412,
+        "license_file": "LICENSE",
+        "fetched_at_utc": "2026-11-19T01:51:22.300Z"
+      }
+    },
+    "deliverables": {
+      "out/reference-contact-sheet.jpg": {
+        "exists": true,
+        "bytes": 458800,
+        "sha256": "6b080ee1591f15b148dfa27d6c5b058a39c57aa44bd075c5a23a8b1df07baf15"
+      },
+      "out/soldier-reference-preview.mp4": {
+        "exists": true,
+        "bytes": 5909591,
+        "sha256": "4b51e31a4d3fc76f4e1e00985907ae36b6425f0c5f827abdcd5057c0f568b197"
+      },
+      "out/new-zombie-10s-preview.mp4": {
+        "exists": true,
+        "bytes": 10329436,
+        "sha256": "4fc9481a8f69dc0547a09e34a88c904f381b3f2101a602feb929ea5f3a15b190"
+      },
+      "out/new-zombie-contact-sheet.jpg": {
+        "exists": true,
+        "bytes": 421564,
+        "sha256": "39c224bf555900d59fad5f3b79f63aa86b529d4a0f574e5734f7e9d80e226e6b"
+      }
+    },
+    "soldier_reference_stills": {
+      "requested_frames": [
+        0,
+        40,
+        80,
+        115,
+        175,
+        215,
+        250,
+        290,
+        335,
+        370,
+        430,
+        470,
+        530,
+        570,
+        591
+      ],
+      "elapsed_ms": 27952,
+      "avg_ms_per_frame": 1863.5,
+      "repeat_frame0_check": {
+        "frameIndex": 0,
+        "firstSha256": "2654857ffbb0bb842c2352e79b656847f193e84a2f0303ea273c539aed1e248f",
+        "repeatSha256": "2654857ffbb0bb842c2352e79b656847f193e84a2f0303ea273c539aed1e248f",
+        "deterministicMatch": true
+      },
+      "console_errors": 0,
+      "page_errors": 0,
+      "frame_hashes": {
+        "frame_000000.jpg": "2654857ffbb0bb842c2352e79b656847f193e84a2f0303ea273c539aed1e248f",
+        "frame_000040.jpg": "642fe65744b9bf7f22ad9e955808bd963d689f2b7569aedd9209914e9850e2ed",
+        "frame_000080.jpg": "756b65e8a95ac3bcbfa2a998bd8126d18c2a52be1d842a21364a8c6279943ebf",
+        "frame_000115.jpg": "fa74ff814264e7bbcf8e0e48be22af0b489189c66139ad5e14594f590c773438",
+        "frame_000175.jpg": "0712774c48ce1d0e2a7bfc7ed28c210df8a5e03c06cc4a69208a58104cd19c03",
+        "frame_000215.jpg": "d1c89eda7173c904e06ae153514e0f84b0aa19b0e5e3f6d76a5ca7703df64149",
+        "frame_000250.jpg": "5b8b1dbac84f92bf1b666239b8e965e6f5bfe5f27a2085281f2fd679e6cb8d75",
+        "frame_000290.jpg": "f8a7bca4aeb2c4d8fea7e954deb8df1849c984391cec6d1c3c845a7558bab089",
+        "frame_000335.jpg": "eb84e01ce0e27b914839f548ae19027b328654b2764dda39befed04306fdc285",
+        "frame_000370.jpg": "74fedab0ef7714137b5c5f53ebc5f278783a8b887f10623cd9d3e023aebda663",
+        "frame_000430.jpg": "526e6a8f2e14eea784ed3aa656a1135bca13fc1b021ee80ec2f47ba94c6573c9",
+        "frame_000470.jpg": "27665d75c1b8db3cb06c53e4652fdc4c65ce738668629dbcca593355857c0e01",
+        "frame_000530.jpg": "cc1758e54366e8244bfb2e460e64cab76014a7b4c10e6a0c7cd48cd671ed6795",
+        "frame_000570.jpg": "e5cc312ee686d54a16754bef8fffc8155097d8b6ac8e3dc112653de64bfa60c4",
+        "frame_000591.jpg": "aee1fcc23355678830c3e71f004e77c7ca2f30850cf1a8ec2093768e64381033"
+      }
+    },
+    "soldier_reference_preview": {
+      "label": "ORIGINAL_SOLDIER_MUSIC_SFX_NO_VOICEOVER_6S_PREVIEW",
+      "render": {
+        "projectId": "soldier-reference-preview",
+        "workers": 2,
+        "range": {
+          "startFrame": 0,
+          "endFrame": 179,
+          "count": 180
+        },
+        "renderedCount": 180,
+        "skippedViaResume": 0,
+        "elapsedMs": 173741,
+        "effectiveMsPerFrame": 965.2,
+        "diskPreflight": {
+          "probePath": "D:\\Project_github\\Stick-Animation\\workspace\\cache",
+          "freeBytes": 50823434240,
+          "freeMb": 48469,
+          "estimatedBytes": 94371840,
+          "lowWatermarkBytes": 2147483648,
+          "requiredBytes": 2241855488,
+          "ok": true
+        },
+        "consoleErrors": 0,
+        "pageErrors": 0,
+        "browserVersion": "159.0.8154.6",
+        "launchProfile": "swiftshader-webgl",
+        "outDir": "D:\\Project_github\\Stick-Animation\\workspace\\cache\\soldier-preview-frames",
+        "frameCount": 180,
+        "firstFrameSha256": "69df8f6db0af7f57f42026c1453402949294104ce41ed288f88be4ab2be6afcc",
+        "lastFrameSha256": "2b75f5779b9391ae73c6d621b61c0e5256f063257a20003f77e356f43ad1879e"
+      }
+    },
+    "new_zombie_10s_proof": {
+      "label": "NEW_ORIGINAL_10S_CONVENIENCE_STORE_ZOMBIE_MUSIC_SFX_NO_VOICEOVER",
+      "render": {
+        "projectId": "new-zombie-10s",
+        "workers": 2,
+        "range": {
+          "startFrame": 0,
+          "endFrame": 299,
+          "count": 300
+        },
+        "renderedCount": 300,
+        "skippedViaResume": 0,
+        "elapsedMs": 263821,
+        "effectiveMsPerFrame": 879.4,
+        "diskPreflight": {
+          "probePath": "D:\\Project_github\\Stick-Animation\\workspace\\cache",
+          "freeBytes": 50758467584,
+          "freeMb": 48407.05,
+          "estimatedBytes": 157286400,
+          "lowWatermarkBytes": 2147483648,
+          "requiredBytes": 2304770048,
+          "ok": true
+        },
+        "consoleErrors": 0,
+        "pageErrors": 0,
+        "browserVersion": "159.0.8154.6",
+        "launchProfile": "swiftshader-webgl",
+        "outDir": "D:\\Project_github\\Stick-Animation\\workspace\\cache\\zombie-10s-frames",
+        "frameCount": 300,
+        "firstFrameSha256": "c7bb6937f16f5ad058a4a65d25c199c57e109f88c965bc61f0ca262ffa54af98",
+        "lastFrameSha256": "b003fb2b9c6e8cfd2e95eed13d8a0235857645dd92fb1b5eb2f1668c6c9e563b"
+      }
+    },
+    "disk_free_gb": 47.18
+  },
+  "technical_qa": {
+    "generated_at_utc": "2026-11-19T02:14:09.044129+00:00",
+    "run_id": "SHORT-01-20261119-02",
+    "soldier_backtest_tile0": {
+      "comparison_scope": "Matched Tile 0 (hook MCU 270x480) only; unmatched tiles not assigned fabricated scores",
+      "reference_path": "vendor/cartoon-short-kit/example/soldier/stills.jpg",
+      "rendered_frame0_path": "workspace/cache/soldier-stills/frame_000000.jpg",
+      "mae_rgb_0_to_255": 12.619,
+      "histogram_correlation": 0.9785,
+      "note": "Cross-OS/GPU/font tolerance expected; visual inspection confirmed semantic & structural fidelity."
+    },
+    "soldier_preview_ffprobe": {
+      "path": "out\\soldier-reference-preview.mp4",
+      "bytes": 5909591,
+      "video_codec": "h264",
+      "width": 1080,
+      "height": 1920,
+      "fps": 30.0,
+      "pix_fmt": "yuv420p",
+      "audio_codec": "aac",
+      "audio_present": true,
+      "duration_seconds": 6.0,
+      "faststart": true,
+      "decode_stderr": "",
+      "checks": {
+        "h264": true,
+        "dimensions_1080x1920": true,
+        "fps_30": true,
+        "pix_fmt_yuv420p": true,
+        "faststart_moov_first": true,
+        "audio_requirement_met": true,
+        "duration_ok": true,
+        "decode_clean": true
+      },
+      "ok": true
+    },
+    "soldier_preview_motion": {
+      "frame_count": 180,
+      "pair_count": 179,
+      "min_mad": 0.0308,
+      "mean_mad": 10.0266,
+      "max_mad": 66.3252,
+      "max_consecutive_frozen_pairs": 3,
+      "freeze_threshold_exceeded": false
+    },
+    "soldier_preview_freeze_black_hits": [],
+    "new_zombie_10s_ffprobe": {
+      "path": "out\\new-zombie-10s-preview.mp4",
+      "bytes": 10329436,
+      "video_codec": "h264",
+      "width": 1080,
+      "height": 1920,
+      "fps": 30.0,
+      "pix_fmt": "yuv420p",
+      "audio_codec": "aac",
+      "audio_present": true,
+      "duration_seconds": 10.0,
+      "faststart": true,
+      "decode_stderr": "",
+      "checks": {
+        "h264": true,
+        "dimensions_1080x1920": true,
+        "fps_30": true,
+        "pix_fmt_yuv420p": true,
+        "faststart_moov_first": true,
+        "audio_requirement_met": true,
+        "duration_ok": true,
+        "decode_clean": true
+      },
+      "ok": true
+    },
+    "new_zombie_10s_frame0_qa": {
+      "path": "workspace\\cache\\zombie-10s-frames\\frame_000000.jpg",
+      "format": "JPEG",
+      "mode": "RGB",
+      "width": 1080,
+      "height": 1920,
+      "bytes": 211798,
+      "mean_luma": 142.723,
+      "std_luma": 58.514,
+      "dims_ok": true,
+      "is_black_or_flat": false,
+      "ok": true
+    },
+    "new_zombie_10s_motion": {
+      "frame_count": 300,
+      "pair_count": 299,
+      "min_mad": 0.3909,
+      "mean_mad": 16.3077,
+      "max_mad": 89.8479,
+      "max_consecutive_frozen_pairs": 0,
+      "freeze_threshold_exceeded": false
+    },
+    "new_zombie_10s_freeze_black_hits": [],
+    "audio_audit_soldier_vs_skill_spec": {
+      "fixture_note": "TECHNICAL_SYNTHETIC_VOICE_PROXY_ONLY (no human voice.mp3 supplied)",
+      "config_a_original_audio_py": {
+        "provenance": "COPIED_ORIGINAL_UNMODIFIED_RUNTIME",
+        "stdout": "ok 19.733333333333334",
+        "channels": 1,
+        "sample_rate": 48000,
+        "duration_seconds": 19.7333,
+        "dynamic_ducking_present": true,
+        "ducking_formula": "duck = 1 - 0.45 * clip(ve / (ve.max() * 0.25), 0, 1)",
+        "saturation_present": true,
+        "saturation_formula": "tanh(mix * 0.95) / tanh(0.95)",
+        "final_peak": 0.999969,
+        "gated_rms": 0.283046,
+        "all_samples_finite": true,
+        "divergence_vs_skill_md": "Original audio.py uses envelope-follower dynamic ducking + tanh saturation + fixed scalar multipliers (1.4 music, 0.5 sfx) instead of writing stems for mix.py linear -6.02 dB gated-RMS locking."
+      },
+      "config_b_new_skill_spec_mix_py": {
+        "provenance": "NEW_IMPLEMENTATION_SKILL_SPEC_LINEAR_MIXER",
+        "dynamic_ducking": false,
+        "sample_rate": 48000,
+        "channels": 2,
+        "samples": 947200,
+        "duration_seconds": 19.733333,
+        "narration_gated_rms": 0.228473,
+        "narration_active_ratio": 0.6548,
+        "music_linear_gain": 0.944775,
+        "music_target_ratio": 0.5,
+        "music_measured_ratio": 0.5,
+        "music_measured_db_rel_narration": -6.0206,
+        "sfx_linear_gain": 0.187991,
+        "sfx_peak_after_cap": 0.65,
+        "sfx_peak_cap": 0.65,
+        "pre_limit_peak": 1.229187,
+        "master_linear_gain": 0.781004,
+        "limiter_engaged": true,
+        "final_peak": 0.96,
+        "master_peak_cap": 0.96,
+        "all_samples_finite": true,
+        "clipped_samples": 0
+      },
+      "preview_music_sfx_export": null
+    },
+    "timing_audit_synthetic_cadence": {
+      "fixture_label": "TECHNICAL_SYNTHETIC_CADENCE_FIXTURE_NOT_HUMAN_SPEECH",
+      "stdout": "source=silence-align (cost 0.30) duration=6.00s frames=180\n  0.15-  1.85  f   4-  55  A Roman soldier stood guard at a bridge for thirty years,\n  2.25-  3.85  f  67- 115  refusing to leave his post.\n  4.25-  5.75  f 127- 172  Even when the empire collapsed, he stayed.",
+      "duration": 6.0,
+      "frames30": 180,
+      "source": "silence-align (cost 0.30)",
+      "segment_count": 3,
+      "phrase_count": 3,
+      "word_count": 23,
+      "monotonic_words": true,
+      "within_duration": true
+    }
+  }
+}

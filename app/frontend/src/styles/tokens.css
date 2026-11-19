@@ -1,0 +1,27 @@
+:root {
+  --bg: #0E1116;
+  --surface: #171C24;
+  --surface-raised: #202734;
+  --surface-hover: #283242;
+  --border: #303A48;
+
+  --text: #F0F3F7;
+  --text-muted: #AAB6C5;
+
+  --accent: #8BA6F3;
+  --accent-hover: #A2B8F7;
+  --accent-ink: #0B111C;
+
+  --success: #7CD1B0;
+  --warning: #E6C17B;
+  --danger: #F19D9D;
+
+  --radius-card: 14px;
+  --radius-control: 10px;
+  --radius-pill: 999px;
+
+  --font-sans: 'Be Vietnam Pro', 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-mono: ui-monospace, 'Cascadia Code', 'Fira Code', Consolas, monospace;
+
+  --focus-ring: 0 0 0 2px #0E1116, 0 0 0 4px #8BA6F3;
+}

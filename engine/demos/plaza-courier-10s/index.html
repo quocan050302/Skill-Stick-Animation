@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>SHORT-02 Plaza Courier 10s — Three.js 2D+3D Renderer</title>
+  <style>
+    html, body { margin: 0; padding: 0; background: #000; overflow: hidden; }
+    canvas { display: block; width: 1080px; height: 1920px; }
+  </style>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "/three/build/three.module.js"
+      }
+    }
+  </script>
+</head>
+<body>
+  <canvas id="c" width="1080" height="1920"></canvas>
+  <script>
+    window.addEventListener('error', (e) => {
+      window.err = String(e.message);
+      console.error('ERR', e.message);
+    });
+  </script>
+  <script type="module" src="./main_plaza.js"></script>
+</body>
+</html>

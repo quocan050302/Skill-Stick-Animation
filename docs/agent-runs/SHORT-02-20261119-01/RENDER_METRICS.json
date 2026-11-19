@@ -1,0 +1,56 @@
+{
+  "run_id": "SHORT-02-20261119-01",
+  "project_id": "chuyen-giao-hang-hoang-hon-303276",
+  "title": "Chuyen Giao Hang Hoang Hon",
+  "template_id": "plaza-courier-10s",
+  "export_id": "exp_20261119031356_d23e06",
+  "authored_via": "Playwright UI interaction (create, edit scene/shot parameters, undo/redo, full export)",
+  "applied_overrides": {
+    "scene": {
+      "lightingPreset": "goldenHour",
+      "signTitle": "HOANG HON PLAZA",
+      "characterStyle": "guardCap",
+      "parcelColor": "gold"
+    },
+    "shots_deliver": {
+      "cameraPreset": "closeup",
+      "expression": "smile",
+      "pose": "wave"
+    }
+  },
+  "render": {
+    "workers": 2,
+    "launch_profile": "swiftshader-webgl",
+    "browser_version": "159.0.8154.6",
+    "range": "0..299",
+    "frame_count": 300,
+    "skipped_via_resume": 0,
+    "elapsed_ms": 269853,
+    "effective_ms_per_frame": 899.5,
+    "console_errors": 0,
+    "page_errors": 0,
+    "first_frame_sha256": "aba0fb63840a4d7f9cac268a6cf44a85b6db9660f1dfb819f3f7d7c89f6361b5",
+    "last_frame_sha256": "1d309deeabd7defc30e393d0009043ac04b808456b627be2dcd88aeaa3b4ec8c"
+  },
+  "mp4_output": {
+    "workspace_path": "workspace/projects/chuyen-giao-hang-hoang-hon-303276/renders/exp_20261119031356_d23e06/output.mp4",
+    "out_copy_path": "out/short02_plaza_ui_demo_10s.mp4",
+    "bytes": 6958877,
+    "sha256": "428370e574863596847f784287e3d0ff8694826625b17f67dccfd29a4590855a",
+    "video_codec": "h264",
+    "width": 1080,
+    "height": 1920,
+    "fps": 30,
+    "pix_fmt": "yuv420p",
+    "faststart": true,
+    "audio_codec": "aac",
+    "duration_seconds": 10.0,
+    "motion_mean_mad": 10.6223,
+    "freeze_black_hits": 0
+  },
+  "edit_proof": {
+    "before_f270_sha256": "175542947d676080305996eff999b19982811347ad9c20a5833b7f719fb694e7",
+    "after_f270_sha256": "9622985b39d4aac8b7770605878045bda219e3aa5a79f2e55aa804c5852c16",
+    "changed": true
+  }
+}
