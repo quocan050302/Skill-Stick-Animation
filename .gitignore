@@ -1,0 +1,48 @@
+# Dependencies & virtual environments
+node_modules/
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.secret
+
+# Local raw inputs & unlicensed third-party kit snapshot (G05 Public Repo Licensing Gate)
+# Do NOT remove these ignores unless public redistribution rights are explicitly verified.
+_inputs/
+vendor/cartoon-short-kit/
+vendor/upstream/
+engine/web/
+
+# Generated frames, large media, render outputs, and caches
+out/
+workspace/jobs/
+workspace/cache/
+workspace/projects/*/frames/
+workspace/projects/*/renders/
+*.mp4
+*.mov
+*.mkv
+*.wav
+*.mp3
+*.flac
+*.log
+
+# Temporary & OS files
+.tmp/
+tmp/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# SHORT-02 runtime user projects, snapshots, uploads & built FE bundle
+workspace/projects/
+app/frontend/dist/
