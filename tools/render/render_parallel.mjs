@@ -29,6 +29,7 @@ function parseCli(argv) {
     resume: true,
     workers: Math.min(2, Math.max(1, Math.floor(os.cpus().length / 4))),
     reportPath: null,
+    overridesFile: null,
   };
   for (let i = 0; i < argv.length; i++) {
     const k = argv[i];
@@ -42,6 +43,7 @@ function parseCli(argv) {
     else if (k === '--workers') opts.workers = Math.min(3, Math.max(1, Number(argv[++i])));
     else if (k === '--no-resume') opts.resume = false;
     else if (k === '--report') opts.reportPath = path.resolve(argv[++i]);
+    else if (k === '--overrides-file') opts.overridesFile = path.resolve(argv[++i]);
   }
   return opts;
 }
@@ -86,6 +88,7 @@ try {
       '--report', shardReport,
     ];
     if (opts.webDir) args.push('--web-dir', opts.webDir);
+    if (opts.overridesFile) args.push('--overrides-file', opts.overridesFile);
     if (opts.resume) args.push('--resume');
 
     return new Promise((resolve, reject) => {

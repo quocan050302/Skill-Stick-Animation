@@ -459,6 +459,7 @@ const swapForNd = (on) => {
 };
 
 window.renderFrame = (f) => {
+  syncSceneTextOverrides();
   const S = shotAt(f);
   const L = lightFor(S);
   const C = camAt(f);
@@ -523,6 +524,41 @@ window.renderFrame = (f) => {
   renderer.render(dofScene, fsCam);
   return true;
 };
+
+let appliedSignTitle = '24/7 SNACKS';
+let appliedAisleLabel = 'CRUNCH AISLE';
+
+function syncSceneTextOverrides() {
+  const ov = typeof globalThis !== 'undefined' ? globalThis.__STUDIO_OVERRIDES__ : null;
+  const rawSign = ov?.scene?.signTitle ? String(ov.scene.signTitle).slice(0, 18).trim() : '24/7 SNACKS';
+  const nextSign = rawSign || '24/7 SNACKS';
+  if (nextSign !== appliedSignTitle) {
+    appliedSignTitle = nextSign;
+    const prevMap = MAT.sign247.map;
+    MAT.sign247.map = P.makeTex(P.diegeticSign(nextSign, 'OPEN ALL NIGHT', '#237a75', '#fff9eb', '#f6c343'), 1, 1, true);
+    MAT.sign247.needsUpdate = true;
+    prevMap?.dispose?.();
+  }
+  const rawAisle = ov?.scene?.aisleLabel ? String(ov.scene.aisleLabel).slice(0, 18).trim() : 'CRUNCH AISLE';
+  const nextAisle = rawAisle || 'CRUNCH AISLE';
+  if (nextAisle !== appliedAisleLabel) {
+    appliedAisleLabel = nextAisle;
+    const prevMap = MAT.signAisle.map;
+    MAT.signAisle.map = P.makeTex(P.diegeticSign(nextAisle, 'MEGA CHIPS', '#c93832', '#ffffff', '#ffd954'), 1, 1, true);
+    MAT.signAisle.needsUpdate = true;
+    prevMap?.dispose?.();
+  }
+}
+
+window.setStudioOverrides = (overrides) => {
+  globalThis.__STUDIO_OVERRIDES__ = overrides && typeof overrides === 'object' ? overrides : null;
+  syncSceneTextOverrides();
+  return true;
+};
+
+if (globalThis.__STUDIO_OVERRIDES__) {
+  syncSceneTextOverrides();
+}
 
 window.TOTAL = TOTAL;
 window.ready = true;

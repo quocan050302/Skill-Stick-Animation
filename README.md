@@ -18,7 +18,9 @@ Independent 2D-character + 3D-world, **9:16 portrait (1080×1920, 30 FPS)** shor
 - `tools/timing/` — Timing & frame-count validators (`timing_contract.py`)
 - `tools/audio/` — **NEW** SKILL-spec linear `-6.02 dB` gated-RMS mixer (`mix.py`), Soldier Config A vs B auditor (`soldier_audio_audit.py`), zombie demo synth (`zombie_audio.py`)
 - `tools/qa/` — Pillow frame/motion QA + FFprobe/FFmpeg validator (`verify_media.py`), strict TV-range `yuv420p` MP4 exporter (`export_mp4.py`), contact-sheet builder (`contact_sheet.py`)
-- `app/shared/` & `app/server/` — Strict 9:16 contract (`contract.mjs`) & loopback verification API (`api_server.mjs`)
+- `app/shared/`, `app/server/`, `app/frontend/` — Cartoon Short Studio (`SHORT-02`) dark React+TypeScript+Vite UI, 9:16 strict contract (`contract.mjs`, `project_schema.mjs`), modular loopback API + SSE job runner (`api_server.mjs`, `services/`)
+- `engine/demos/lib/`, `engine/demos/zombie-10s/`, `engine/demos/plaza-courier-10s/` — Portable MIT-licensed toon base + two 10s (300-frame, 9:16) editable 3D studio templates
+- `tools/dev.mjs` — Unified FE+BE runner (`npm run dev` starts API + Vite dev proxy; `npm run start` serves built FE + BE on one loopback origin)
 - `tests/` — Unit, integration, regression/backtest, negative tests & bounded async DAG runner (`run_all.py`)
 - `docs/` — Forensic audit, dependencies, architecture, parity, SHORT-02 contract, QA reports, and immutable per-run logs (`docs/agent-runs/`)
 
@@ -75,20 +77,34 @@ node tools/render/render_parallel.mjs --project-id new-zombie-10s --web-dir engi
 python tools/audio/mix.py --narration <vo.wav> --music <music.wav> --sfx <sfx.wav> --out <mixed.wav>
 ```
 
-### 6. Run Full Bounded Async Test Suite (Unit + Integration + Regression + Backtest + Negative)
+### 6. Launch Cartoon Short Studio UI (`SHORT-02` FE + BE Unified)
 
 ```bash
-npm run test:all
+# Development mode (starts API on 127.0.0.1:8787 + Vite dev server on 127.0.0.1:5173)
+npm run dev
+
+# Build production frontend & serve FE + BE from a single loopback origin
+npm run build
+npm run start
 ```
 
-### 7. Verify Exported MP4 with FFprobe
+### 7. Run Full Verification Suites
 
 ```bash
-ffprobe -v error -print_format json -show_format -show_streams out/new-zombie-10s-preview.mp4
+npm run test:all      # SHORT-01 bounded async regression + integration suite
+npm run test          # Node unit + live API integration tests (SHORT-01 + SHORT-02)
+npm run test:e2e      # Playwright Studio UI E2E + responsive/a11y audit
+npm run verify:all    # Master verification: build + SHORT-01 + SHORT-02 + dev smoke
+```
+
+### 8. Verify Exported MP4 with FFprobe
+
+```bash
+ffprobe -v error -print_format json -show_format -show_streams out/short02_plaza_ui_demo_10s.mp4
 ```
 
 ---
 
 ## Documentation
 
-See [docs/README.md](docs/README.md), [docs/QA_REPORT.md](docs/QA_REPORT.md), [docs/ENGINE_PARITY.md](docs/ENGINE_PARITY.md), and [docs/ENGINE_API_CONTRACT.md](docs/ENGINE_API_CONTRACT.md).
+See [docs/README.md](docs/README.md), [docs/QA_REPORT.md](docs/QA_REPORT.md), [docs/ENGINE_PARITY.md](docs/ENGINE_PARITY.md), [docs/ENGINE_API_CONTRACT.md](docs/ENGINE_API_CONTRACT.md), and the latest run dossier at [docs/agent-runs/SHORT-02-20261119-01/README.md](docs/agent-runs/SHORT-02-20261119-01/README.md).

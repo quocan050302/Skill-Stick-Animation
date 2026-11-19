@@ -42,3 +42,7 @@ tmp/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# SHORT-02 runtime user projects, snapshots, uploads & built FE bundle
+workspace/projects/
+app/frontend/dist/

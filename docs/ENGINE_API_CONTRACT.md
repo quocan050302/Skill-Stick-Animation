@@ -44,5 +44,27 @@ Strictly bound to `127.0.0.1` (no `0.0.0.0`, no arbitrary user script/shell exec
 | **Audio Mix** | Original `example/soldier/audio.py` (dynamic ducking + `tanh`) vs **NEW** `tools/audio/mix.py` (SKILL-spec linear `-6.02 dB` gated-RMS, zero ducking). | UI selector between `skill_linear_minus6db` (default) and `original_kit_baseline`, displaying measured gated-RMS & peak headroom. |
 | **QA & Export** | **Implemented in SHORT-01:** `tools/qa/export_mp4.py` (strict `yuv420p` H.264/AAC `+faststart`), `verify_media.py` (Pillow + FFprobe + null decode + motion MAD), `contact_sheet.py`. | One-click QA summary panel surfacing FFprobe checks, `freezedetect`/`blackdetect`, and contact-sheet inspection. |
 
+---
+
+## 4. Implemented Studio Backend API & Schema (`SHORT-02`, on `feat/short-02-compact-dark-studio`)
+
+All endpoints bind strictly to `127.0.0.1`, reject non-loopback `Host`/`Origin` headers with `403`, forbid arbitrary user script execution (`data-only` `window.setStudioOverrides` injection), and enforce canonical path confinement under `workspace/`:
+
+- **System & Capabilities:**
+  - `GET /api/health` — Returns normalized `node`, `three`, `playwright`, `python`, `ffmpeg`, `ffprobe`, `originalEngine` (`ready` / `missingFiles`), and warm preview statistics.
+  - `GET /api/contract` — Immutable 9:16 `1080×1920 @ 30fps` H.264/AAC/yuv420p specification.
+  - `GET /api/templates` — Lists starter templates (`zombie-store-10s`, `plaza-courier-10s`, `soldier-original`), marking `soldier-original` honestly unavailable (`requiresOriginalKit: true`) when `engine/web/` is absent.
+- **Projects CRUD (`workspace/projects/<projectId>/project.json`):**
+  - `GET /api/projects`, `POST /api/projects` (409 `INPUT_BLOCKED` if original kit missing for `soldier-original`)
+  - `GET /api/projects/:id`, `PATCH /api/projects/:id` (atomic serialized updates with optimistic `expectedRevision` -> 409 `REVISION_CONFLICT` and `computeRenderHash`)
+  - `DELETE /api/projects/:id` (requires `confirmProjectId`)
+- **Voiceover Assets & Derived Timing:**
+  - `POST /api/projects/:id/assets/voiceover` — Bounded 32 MB binary/multipart upload; enforces extension allowlist (`.wav`, `.mp3`, `.m4a`), magic-byte sniffing, `ffprobe` validation, and derives `durationFrames = round(durationSeconds * 30)` (`TIMING_DURATION_MISMATCH` blocks export when `voiceoverFrames` exceeds fixed template bounds while `syncDurationToVoiceover === true`).
+  - `DELETE /api/projects/:id/assets/voiceover` — Removes attached narration and restores template frame count.
+- **Warm Preview & Render Jobs:**
+  - `GET /api/projects/:id/preview/frame?f=<idx>` — Warm single-session Chromium Three.js preview with LRU cache (48 entries / 24 MiB / 10m), `ETag`/`304`, and burst request coalescing (`409 PREVIEW_SUPERSEDED`).
+  - `POST /api/projects/:id/jobs`, `GET /api/projects/:id/jobs`, `GET /api/jobs/:jobId`, `GET /api/jobs/:jobId/events` (SSE), `POST /api/jobs/:jobId/cancel` (Windows/POSIX process-tree kill + monotonic cleanup).
+  - `GET /api/projects/:id/exports/:exportId/file` (supports HTTP `Range` `206` & `?download=1`) and `GET /api/projects/:id/exports/:exportId/qa` (`verify_media.py` + `ffmpeg freezedetect/blackdetect`, keeping `human_visual_review` & non-voiceover narration honestly `UNVERIFIED`).
+
 > [!NOTE]
-> Arbitrary no-code 3D scene editing via JSON is **not** implemented in SHORT-01; SHORT-02 will introduce validated scene templates on top of the audited adapters above.
+> Arbitrary procedural 3D mesh authoring in UI remains outside `SHORT-02` scope; editing uses data-only schema overrides (`project_schema.mjs`) applied safely to validated 9:16 3D+2D templates.

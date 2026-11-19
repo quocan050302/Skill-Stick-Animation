@@ -15,7 +15,30 @@ export const SHOTS = [
   { id: 'bump', a: 220, b: 299, light: 'storePayoff' },
 ];
 
-export const shotAt = (f) => SHOTS.find((s) => f >= s.a && f <= s.b) || SHOTS[SHOTS.length - 1];
+function activeOverrides() {
+  const ov = typeof globalThis !== 'undefined' ? globalThis.__STUDIO_OVERRIDES__ : null;
+  return ov && typeof ov === 'object' ? ov : null;
+}
+
+function shotOverrideFor(shotId) {
+  const ov = activeOverrides();
+  const s = ov?.shots && typeof ov.shots === 'object' ? ov.shots[shotId] : null;
+  return s && typeof s === 'object' ? s : null;
+}
+
+export const shotAt = (f) => {
+  const base = SHOTS.find((s) => f >= s.a && f <= s.b) || SHOTS[SHOTS.length - 1];
+  const ov = activeOverrides();
+  const so = shotOverrideFor(base.id);
+  const candidate =
+    (so?.lightingPreset && so.lightingPreset !== 'default' && LIGHTS[so.lightingPreset]
+      ? so.lightingPreset
+      : null) ||
+    (ov?.scene?.lightingPreset && ov.scene.lightingPreset !== 'auto' && LIGHTS[ov.scene.lightingPreset]
+      ? ov.scene.lightingPreset
+      : null);
+  return candidate ? { ...base, light: candidate } : base;
+};
 
 const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -118,6 +141,18 @@ export const camAt = (f) => {
   // Brief comic flash on dramatic lighting cut
   c.flash = f >= 155 && f < 158 ? 0.25 * (1 - (f - 155) / 3) : 0;
   c.shadowAt = [1.5, 1.0, 0];
+
+  const so = shotOverrideFor(S.id);
+  if (so?.cameraPreset === 'closeup') {
+    c.pos = lerp3(c.pos, c.look, 0.24);
+    c.fov = Math.max(20, c.fov * 0.78);
+  } else if (so?.cameraPreset === 'wide') {
+    c.pos = lerp3(c.pos, c.look, -0.26);
+    c.fov = Math.min(62, c.fov * 1.18);
+  } else if (so?.cameraPreset === 'dutchTilt') {
+    c.roll = (c.roll || 0) + 7.5;
+  }
+
   return c;
 };
 
@@ -126,17 +161,28 @@ const dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
 export const dofAt = (f) => {
   const S = shotAt(f);
   const C = camAt(f);
+  let base;
   switch (S.id) {
     case 'enter':
-      return { focus: dist(C.pos, [-3.0, 1.35, 0.2]), cinf: lerp(9, 0, smooth(ramp(f, 12, 42))), near: 1 };
+      base = { focus: dist(C.pos, [-3.0, 1.35, 0.2]), cinf: lerp(9, 0, smooth(ramp(f, 12, 42))), near: 1 };
+      break;
     case 'empty':
-      return { focus: dist(C.pos, [4.6, 1.5, -2.0]), cinf: lerp(0, 6, smooth(ramp(f, 115, 150))), near: 1 };
+      base = { focus: dist(C.pos, [4.6, 1.5, -2.0]), cinf: lerp(0, 6, smooth(ramp(f, 115, 150))), near: 1 };
+      break;
     case 'react':
-      return { focus: dist(C.pos, [1.65, 1.4, -0.35]), cinf: 12, near: 1 };
+      base = { focus: dist(C.pos, [1.65, 1.4, -0.35]), cinf: 12, near: 1 };
+      break;
     case 'bump':
-      return { focus: dist(C.pos, [2.1, 1.3, 0.0]), cinf: lerp(2, 7, smooth(ramp(f, 265, 295))), near: 1 };
+      base = { focus: dist(C.pos, [2.1, 1.3, 0.0]), cinf: lerp(2, 7, smooth(ramp(f, 265, 295))), near: 1 };
+      break;
+    default:
+      base = { focus: 6, cinf: 0, near: 1 };
   }
-  return { focus: 6, cinf: 0, near: 1 };
+  const so = shotOverrideFor(S.id);
+  if (so?.dofStrength === 'off') return { ...base, cinf: 0 };
+  if (so?.dofStrength === 'soft') return { ...base, cinf: 5 };
+  if (so?.dofStrength === 'strong') return { ...base, cinf: 14 };
+  return base;
 };
 
 export const worldAt = (f) => {
@@ -266,6 +312,23 @@ export const actorsAt = (f, cast) => {
       opts.bob = q(Math.abs(Math.sin((f - 276) * 0.45)) * 0.035, 3);
       opts.tilt = q(3.5 * Math.sin((f - 276) * 0.35), 1);
     }
+  }
+
+  const ov = activeOverrides();
+  const so = shotOverrideFor(S.id);
+  if (so?.expression && so.expression !== 'default') {
+    opts.expr = so.expression;
+  }
+  if (so?.pose && so.pose !== 'default') {
+    if (so.pose === 'celebrate' || so.pose === 'cheek' || so.pose === 'up') {
+      opts.L = so.pose;
+      opts.R = so.pose;
+    } else {
+      opts.R = so.pose;
+    }
+  }
+  if (ov?.scene?.hoodieColor && /^#[0-9a-f]{6}$/i.test(ov.scene.hoodieColor)) {
+    opts.hoodieColor = ov.scene.hoodieColor;
   }
 
   out.push({

@@ -1,0 +1,67 @@
+{
+  "run_id": "SHORT-02-20261119-01",
+  "verified_at_utc": "2026-11-19T03:21:34Z",
+  "branch": "feat/short-02-compact-dark-studio",
+  "base_commit": "47eb92188c393cc53b049b73b12922889e14c7a1",
+  "overall_ok": true,
+  "verify_all_steps": [
+    {
+      "name": "frontend_typecheck_and_build",
+      "command": "npm.cmd run build",
+      "returncode": 0,
+      "elapsed_seconds": 1.03,
+      "ok": true,
+      "details": "tsc --noEmit 0 errors; Vite 8.3.8 built 25 modules in 145ms"
+    },
+    {
+      "name": "short01_regression_suite",
+      "command": "python tests/run_all.py",
+      "returncode": 0,
+      "elapsed_seconds": 9.49,
+      "ok": true,
+      "details": "9/9 suites passed, 0 failed, 0 blocked"
+    },
+    {
+      "name": "short02_unit_tests",
+      "command": "node --test tests/unit/test_short02_backend.mjs",
+      "returncode": 0,
+      "elapsed_seconds": 0.43,
+      "ok": true,
+      "details": "4/4 tests passed (CRUD + locks + REVISION_CONFLICT + path traversal, voiceover sniffing/ffprobe, preview LRU + warm session + coalescing, job recovery)"
+    },
+    {
+      "name": "short02_api_integration",
+      "command": "node --test tests/integration/test_short02_api.mjs",
+      "returncode": 0,
+      "elapsed_seconds": 22.06,
+      "ok": true,
+      "details": "2/2 tests passed (Host/Origin/headers + missing-kit INPUT_BLOCKED; live WebGL JPEG preview, edit SHA-256 pixel diff, long voiceover 409 block, active job cancellation, bounded MP4 + HTTP 206 Range + FFprobe/QA PASS)"
+    },
+    {
+      "name": "short02_playwright_e2e",
+      "command": "node tests/e2e/test_studio_e2e.mjs",
+      "returncode": 0,
+      "elapsed_seconds": 51.53,
+      "ok": true,
+      "details": "UI empty state, Escape modal, project persistence across reload, edit pixel diff, undo/redo, active job cancel, bounded MP4 <video> playback & QA drawer, 5 viewports (1440/1280/1024/390/320) 0 horizontal overflow & >=40px targets, missing-kit modal, 0 console/page/5xx errors"
+    },
+    {
+      "name": "unified_dev_smoke",
+      "command": "node tools/dev.mjs --mode dev (smoke)",
+      "returncode": 0,
+      "elapsed_seconds": 1.21,
+      "ok": true,
+      "details": "Unified FE+BE proxy returned HTTP 200 on both / and /api/health and tore down cleanly"
+    }
+  ],
+  "full_300f_ui_demo_run": {
+    "command": "node tests/e2e/test_studio_e2e.mjs --full-demo --keep-demo",
+    "exit_code": 0,
+    "project_id": "chuyen-giao-hang-hoang-hon-303276",
+    "template_id": "plaza-courier-10s",
+    "export_id": "exp_20261119031356_d23e06",
+    "frames_rendered": 300,
+    "mp4_bytes": 6958877,
+    "qa_overall_status": "PASS"
+  }
+}

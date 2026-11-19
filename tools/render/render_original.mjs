@@ -63,6 +63,7 @@ function parseCli(argv) {
     debugMode: null,
     projectId: 'soldier-baseline',
     reportPath: null,
+    overridesFile: null,
   };
   for (let i = 0; i < argv.length; i++) {
     const k = argv[i];
@@ -76,6 +77,7 @@ function parseCli(argv) {
     else if (k === '--debug') opts.debugMode = argv[++i];
     else if (k === '--project-id') opts.projectId = argv[++i];
     else if (k === '--report') opts.reportPath = path.resolve(argv[++i]);
+    else if (k === '--overrides-file') opts.overridesFile = path.resolve(argv[++i]);
   }
   return opts;
 }
@@ -100,6 +102,10 @@ if (process.argv[1] && path.resolve(process.argv[1]) === __filename) {
     }
   }
 
+  const overrides = opts.overridesFile
+    ? JSON.parse(fs.readFileSync(opts.overridesFile, 'utf8'))
+    : undefined;
+
   const adapter = createRendererAdapter(ROOT);
   const t0 = Date.now();
   try {
@@ -107,6 +113,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === __filename) {
       projectId: opts.projectId,
       mode: 'original_engine',
       webDir: opts.webDir || undefined,
+      overrides,
     });
 
     const rendered = [];

@@ -143,7 +143,7 @@ export function createRendererAdapter(projectRoot = PROJECT_ROOT) {
         }
         mounts = [
           { prefix: '/three', dir: threeDir },
-          { prefix: '/toonbase', dir: path.join(projectRoot, 'engine', 'web') },
+          { prefix: '/toonbase', dir: path.join(projectRoot, 'engine', 'demos', 'lib') },
           { prefix: '', dir: customWebDir },
         ];
       } else {
@@ -197,12 +197,28 @@ export function createRendererAdapter(projectRoot = PROJECT_ROOT) {
       });
 
       const url = `${server.baseUrl}${entryPath}`;
+      if (projectInput.overrides && typeof projectInput.overrides === 'object') {
+        const cleanOverrides = JSON.parse(JSON.stringify(projectInput.overrides));
+        await page.addInitScript((ov) => {
+          window.__STUDIO_OVERRIDES__ = ov;
+        }, cleanOverrides);
+      }
       await page.goto(url, { waitUntil: 'load', timeout: 30000 });
       await page.waitForFunction(
         () => window.ready === true && typeof window.renderFrame === 'function',
         null,
         { timeout: 20000 }
       );
+      if (projectInput.overrides && typeof projectInput.overrides === 'object') {
+        const cleanOverrides = JSON.parse(JSON.stringify(projectInput.overrides));
+        await page.evaluate((ov) => {
+          if (typeof window.setStudioOverrides === 'function') {
+            window.setStudioOverrides(ov);
+          } else {
+            window.__STUDIO_OVERRIDES__ = ov;
+          }
+        }, cleanOverrides);
+      }
 
       if (pageErrors.length > 0) {
         throw new Error(`Page errors during renderer initialization: ${pageErrors.join(' | ')}`);
@@ -505,11 +521,25 @@ export function createRendererAdapter(projectRoot = PROJECT_ROOT) {
     await prev.server?.close().catch(() => {});
   }
 
+  async function setOverrides(overrides) {
+    if (!state.initialized || !state.page) {
+      throw new Error('Renderer is not initialized. Call initializeRenderer() first.');
+    }
+    const cleanOverrides = overrides ? JSON.parse(JSON.stringify(overrides)) : {};
+    await state.page.evaluate((ov) => {
+      window.__STUDIO_OVERRIDES__ = ov;
+      if (typeof window.setStudioOverrides === 'function') {
+        window.setStudioOverrides(ov);
+      }
+    }, cleanOverrides);
+  }
+
   return {
     initializeRenderer,
     renderFrame,
     renderFrameRange,
     renderStill,
+    setOverrides,
     getRenderMetadata,
     disposeRenderer,
   };

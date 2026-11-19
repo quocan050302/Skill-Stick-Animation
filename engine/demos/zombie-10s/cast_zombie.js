@@ -151,7 +151,11 @@ export function zombieFront(p, opts = {}) {
     step = 0,
     wavePhase = 0,
     holdingChips = false,
+    hoodieColor = null,
   } = opts;
+
+  const hoodieBase = hoodieColor || HOODIE;
+  const hoodieSh = hoodieColor ? '#2f2744' : HOODIE_SH;
 
   const H = headBlob(seed, 118, facing);
   const W = 2 * H.a;
@@ -229,7 +233,7 @@ export function zombieFront(p, opts = {}) {
   const arms = [makeArm(-1, L), makeArm(1, R)];
   const drawArm = (a) => {
     p.stroke(curve(a.pts[0], a.pts[1], a.pts[2]), 7.6 * u, INK);
-    p.stroke(curve(a.pts[0], a.pts[1], a.pts[2]), 4.4 * u, HOODIE);
+    p.stroke(curve(a.pts[0], a.pts[1], a.pts[2]), 4.4 * u, hoodieBase);
     const [hx, hy] = a.pts[2];
     p.ell(hx, hy, 7.6 * u, 7.6 * u, ZOMBIE_SKIN, 2.4 * u);
   };
@@ -237,7 +241,7 @@ export function zombieFront(p, opts = {}) {
   for (const a of arms) if (!a.front) drawArm(a);
 
   // Hoodie body
-  p.gradFill(tp, HOODIE, HOODIE_SH, light);
+  p.gradFill(tp, hoodieBase, hoodieSh, light);
   p.clip(tp, () => {
     const pkt = rrect(tcx - 0.56 * T.a, torsoBot - 0.42 * HH, tcx + 0.56 * T.a, torsoBot - 0.08 * HH, 10 * u);
     p.poly(pkt, '#593c90', 2.0 * u);
