@@ -1,11 +1,13 @@
-"""Master bounded verification runner for Cartoon Short Studio (SHORT-01 + SHORT-02).
+"""Master bounded async DAG verification runner for Cartoon Short Studio (SHORT-01 + SHORT-02 + SHORT-03A).
 
-Runs stages sequentially to guarantee headless Chromium (SwiftShader) and Vite never
-oversubscribe CPU/memory, and exits non-zero immediately if any check fails.
+Stage 1 runs CPU/build/unit suites under a bounded asyncio semaphore (max 2 concurrent workers).
+Stage 2 runs Chromium / live API / dev-server checks sequentially so headless WebGL never oversubscribes.
+Exits non-zero immediately if any stage fails.
 """
 
 from __future__ import annotations
 
+import asyncio
 import json
 import os
 import subprocess
@@ -17,25 +19,30 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 
 
-def run_step(name: str, cmd: list[str], timeout_s: int = 300) -> dict:
-    t0 = time.time()
-    print(f"\n==> [{name}] {' '.join(cmd)}", flush=True)
-    proc = subprocess.run(
-        cmd,
-        cwd=ROOT,
-        timeout=timeout_s,
-        shell=False,
-    )
-    elapsed = round(time.time() - t0, 2)
-    ok = proc.returncode == 0
-    print(f"<== [{name}] exit={proc.returncode} ({elapsed}s)", flush=True)
-    return {
-        "name": name,
-        "command": " ".join(cmd),
-        "returncode": proc.returncode,
-        "elapsed_seconds": elapsed,
-        "ok": ok,
-    }
+async def run_step_async(name: str, cmd: list[str], sem: asyncio.Semaphore, timeout_s: int = 300) -> dict:
+    async with sem:
+        t0 = time.time()
+        print(f"\n==> [{name}] {' '.join(cmd)}", flush=True)
+        proc = await asyncio.create_subprocess_exec(
+            *cmd,
+            cwd=str(ROOT),
+        )
+        try:
+            rc = await asyncio.wait_for(proc.wait(), timeout=timeout_s)
+        except asyncio.TimeoutError:
+            proc.kill()
+            await proc.wait()
+            rc = -1
+        elapsed = round(time.time() - t0, 2)
+        ok = rc == 0
+        print(f"<== [{name}] exit={rc} ({elapsed}s)", flush=True)
+        return {
+            "name": name,
+            "command": " ".join(cmd),
+            "returncode": rc,
+            "elapsed_seconds": elapsed,
+            "ok": ok,
+        }
 
 
 def verify_unified_dev_smoke() -> dict:
@@ -103,20 +110,33 @@ def verify_unified_dev_smoke() -> dict:
     }
 
 
-def main() -> int:
+async def run_dag() -> int:
     npm_cmd = "npm.cmd" if os.name == "nt" else "npm"
     results = []
 
-    steps = [
-        ("frontend_typecheck_and_build", [npm_cmd, "run", "build"], 120),
+    # Stage 1: bounded parallel pure-CPU / build / unit stages (max 3 workers)
+    cpu_sem = asyncio.Semaphore(3)
+    stage1_tasks = [
+        run_step_async("frontend_typecheck_and_build", [npm_cmd, "run", "build"], cpu_sem, 120),
+        run_step_async("short02_unit_tests", ["node", "--test", "tests/unit/test_short02_backend.mjs"], cpu_sem, 120),
+        run_step_async("short03a_unit_and_negative_qa", ["node", "--test", "tests/unit/test_short03a_visual_and_4k.mjs"], cpu_sem, 120),
+    ]
+    stage1_res = await asyncio.gather(*stage1_tasks)
+    results.extend(stage1_res)
+    if not all(r["ok"] for r in stage1_res):
+        print(json.dumps({"overall_ok": False, "steps": results}, indent=2))
+        return 1
+
+    # Stage 2: browser / Chromium / loopback server integration checks (max 1 at a time)
+    gpu_sem = asyncio.Semaphore(1)
+    stage2_steps = [
         ("short01_regression_suite", [sys.executable, "tests/run_all.py"], 300),
-        ("short02_unit_tests", ["node", "--test", "tests/unit/test_short02_backend.mjs"], 120),
         ("short02_api_integration", ["node", "--test", "tests/integration/test_short02_api.mjs"], 240),
+        ("short03a_cross_niche_and_4k_e2e", ["node", "tests/integration/test_short03a_cross_niche_and_e2e.mjs"], 300),
         ("short02_playwright_e2e", ["node", "tests/e2e/test_studio_e2e.mjs"], 240),
     ]
-
-    for name, cmd, timeout_s in steps:
-        res = run_step(name, cmd, timeout_s=timeout_s)
+    for name, cmd, timeout_s in stage2_steps:
+        res = await run_step_async(name, cmd, gpu_sem, timeout_s)
         results.append(res)
         if not res["ok"]:
             print(json.dumps({"overall_ok": False, "steps": results}, indent=2))
@@ -133,6 +153,10 @@ def main() -> int:
     print("\n=== VERIFY_ALL SUMMARY ===")
     print(json.dumps({"overall_ok": overall_ok, "steps": results}, indent=2))
     return 0 if overall_ok else 1
+
+
+def main() -> int:
+    return asyncio.run(run_dag())
 
 
 if __name__ == "__main__":

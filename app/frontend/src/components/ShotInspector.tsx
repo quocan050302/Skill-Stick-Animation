@@ -362,6 +362,31 @@ export function ShotInspector({
                 </div>
               )}
 
+              {editable.has('visualFoundation') && opts.visualFoundations && (
+                <div className="field">
+                  <label className="field-label" htmlFor="scene-visual-foundation-select">
+                    Chất lượng nền thị giác
+                  </label>
+                  <select
+                    id="scene-visual-foundation-select"
+                    className="select"
+                    value={project.sceneOverrides?.visualFoundation || 'baseline'}
+                    onChange={(e) =>
+                      updateSceneField({
+                        visualFoundation: e.target.value as 'baseline' | 'enhanced',
+                      })
+                    }
+                    data-testid="scene-visual-foundation-select"
+                  >
+                    {opts.visualFoundations.map((o) => (
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
               {editable.has('characterStyle') && opts.characterStyles && (
                 <div className="field">
                   <label className="field-label" htmlFor="scene-char-style-select">

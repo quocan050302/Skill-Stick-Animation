@@ -1,0 +1,53 @@
+{
+  "title": "How Mine Salting Worked",
+  "outputPreset": "native_4k",
+  "mp4Path": "out/short03a/how-mine-salting-worked-native-4k-vertical.mp4",
+  "mp4Bytes": 130613803,
+  "ffprobeSummary": {
+    "codec": "h264",
+    "profile": "High",
+    "width": 2160,
+    "height": 3840,
+    "displayAspectRatio": "9:16",
+    "fps": 30.0,
+    "nbFrames": 600,
+    "durationSeconds": 20.0,
+    "pixFmt": "yuv420p",
+    "colorRange": "tv",
+    "audioCodec": "aac",
+    "audioSampleRate": 48000,
+    "audioChannels": 2,
+    "faststartMoovFirst": true,
+    "decodeClean": true
+  },
+  "webglRuntimeProof": {
+    "browserVersion": "159.0.8154.6",
+    "launchProfile": "swiftshader-webgl",
+    "canvasWidth": 2160,
+    "canvasHeight": 3840,
+    "nativeDrawingBufferWidth": 2160,
+    "nativeDrawingBufferHeight": 3840,
+    "maxTextureSize": 8192,
+    "maxRenderbufferSize": 8192,
+    "maxViewportDims": [8192, 8192],
+    "upscaledFromLowerRes": false,
+    "renderTargets": {
+      "canvasW": 2160,
+      "canvasH": 3840,
+      "rtColorW": 2160,
+      "rtColorH": 3840,
+      "rtNdW": 2160,
+      "rtNdH": 3840,
+      "scaleFactor": 2,
+      "visualFoundation": "enhanced"
+    }
+  },
+  "opticalUpscaleSeparationProof": {
+    "mineSourceFrame0": { "width": 2160, "height": 3840, "hf_p999": 19.0, "fft_hi_ratio": 0.015397, "is_native_detail_ok": true },
+    "mineSourceFrame340": { "width": 2160, "height": 3840, "hf_p999": 23.0, "fft_hi_ratio": 0.013543, "is_native_detail_ok": true },
+    "mineDecodedMp4Frame340": { "width": 2160, "height": 3840, "hf_p999": 23.0, "fft_hi_ratio": 0.012362, "is_native_detail_ok": true },
+    "negativeControlMine1080pBicubicUpscale": { "width": 2160, "height": 3840, "hf_p999": 3.0, "fft_hi_ratio": 0.003345, "is_native_detail_ok": false },
+    "negativeControlPlaza1080pBicubicUpscale": { "width": 2160, "height": 3840, "hf_p999": 12.0, "fft_hi_ratio": 0.00764, "is_native_detail_ok": false },
+    "plazaNative4k": { "width": 2160, "height": 3840, "hf_p999": 31.0, "fft_hi_ratio": 0.02296, "is_native_detail_ok": true }
+  }
+}

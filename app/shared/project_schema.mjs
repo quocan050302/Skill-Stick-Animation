@@ -44,6 +44,7 @@ export const TEMPLATES = Object.freeze({
         'signTitle',
         'aisleLabel',
         'hoodieColor',
+        'visualFoundation',
       ]),
     }),
     shots: Object.freeze([
@@ -102,6 +103,10 @@ export const TEMPLATES = Object.freeze({
         { value: '#3e8554', label: 'Xanh lá' },
         { value: '#c97b2b', label: 'Cam hổ phách' },
       ]),
+      visualFoundations: Object.freeze([
+        { value: 'baseline', label: 'Chuẩn gốc (Baseline)' },
+        { value: 'enhanced', label: 'Nâng cao 2D+3D (Enhanced)' },
+      ]),
     }),
   }),
 
@@ -131,6 +136,7 @@ export const TEMPLATES = Object.freeze({
         'signTitle',
         'characterStyle',
         'parcelColor',
+        'visualFoundation',
       ]),
     }),
     shots: Object.freeze([
@@ -190,6 +196,91 @@ export const TEMPLATES = Object.freeze({
         { value: 'coral', label: 'Đỏ cam' },
         { value: 'teal', label: 'Xanh ngọc' },
         { value: 'gold', label: 'Vàng rực' },
+      ]),
+      visualFoundations: Object.freeze([
+        { value: 'baseline', label: 'Chuẩn gốc (Baseline)' },
+        { value: 'enhanced', label: 'Nâng cao 2D+3D (Enhanced)' },
+      ]),
+    }),
+  }),
+
+  'mine-salting-20s': Object.freeze({
+    templateId: 'mine-salting-20s',
+    name: 'How Mine Salting Worked — 20s 4K',
+    description:
+      'Câu chuyện lịch sử 20 giây (600 khung hình, 9:16, hỗ trợ xuất 4K dọc gốc 2160×3840) về thủ đoạn rắc vàng giả mẫu quặng trong hầm mỏ 3D.',
+    webDirRel: 'engine/demos/mine-salting-20s',
+    requiresOriginalKit: false,
+    defaultDurationFrames: 600,
+    fps: RENDER_CONTRACT.fps,
+    aspectRatio: RENDER_CONTRACT.aspectRatio,
+    defaultScript:
+      'Buyers cheered when gold glinted inside dark stone. Earlier, swindlers brushed gold dust onto barren rock and slipped nuggets inside rigged sample sacks. On the brass scale, that sample spiked high. Blind bedrock sampling exposed empty gray stone. Mine salting: the gold was real, the mine was empty.',
+    capabilities: Object.freeze({
+      supportsShotOverrides: true,
+      supportsSceneOverrides: true,
+      supportsCustomSign: false,
+      supportsVoiceover: true,
+      editableFields: Object.freeze([
+        'cameraPreset',
+        'lightingPreset',
+        'expression',
+        'pose',
+        'dofStrength',
+        'visualFoundation',
+      ]),
+    }),
+    shots: Object.freeze([
+      { id: 'hook', title: 'Cảnh 1 · Phát hiện tia vàng (Hook)', a: 0, b: 93, focusFrame: 44, defaultLight: 'mineLantern' },
+      { id: 'secret', title: 'Cảnh 2 · Rắc bụi vàng lên đá', a: 94, b: 204, focusFrame: 148, defaultLight: 'mineLantern' },
+      { id: 'test', title: 'Cảnh 3 · Nhét cốm vàng vào túi mẫu', a: 205, b: 292, focusFrame: 248, defaultLight: 'mineLantern' },
+      { id: 'belief', title: 'Cảnh 4 · Cân thử nghiệm tăng vọt', a: 293, b: 383, focusFrame: 340, defaultLight: 'warmInterior' },
+      { id: 'check', title: 'Cảnh 5 · Khoan lấy mẫu đối chứng', a: 384, b: 478, focusFrame: 436, defaultLight: 'mineLantern' },
+      { id: 'payoff', title: 'Cảnh 6 · Vàng thật, mỏ rỗng (Payoff)', a: 479, b: 599, focusFrame: 548, defaultLight: 'mineExitDaylight' },
+    ]),
+    supportedOptions: Object.freeze({
+      lightingPresets: Object.freeze([
+        { value: 'default', label: 'Theo cảnh gốc' },
+        { value: 'mineLantern', label: 'Đèn lồng hầm mỏ' },
+        { value: 'warmInterior', label: 'Bàn thử nghiệm ấm' },
+        { value: 'mineExitDaylight', label: 'Ánh sáng cửa hầm' },
+      ]),
+      sceneLightingPresets: Object.freeze([
+        { value: 'auto', label: 'Tự động từng cảnh' },
+        { value: 'mineLantern', label: 'Đèn lồng hầm mỏ toàn bài' },
+        { value: 'warmInterior', label: 'Ấm bàn phân tích toàn bài' },
+        { value: 'mineExitDaylight', label: 'Ánh sáng ban ngày toàn bài' },
+      ]),
+      cameraPresets: Object.freeze([
+        { value: 'default', label: 'Mặc định' },
+        { value: 'closeup', label: 'Cận cảnh (Close-up)' },
+        { value: 'wide', label: 'Góc rộng (Wide)' },
+        { value: 'dutchTilt', label: 'Nghiêng kịch tính' },
+      ]),
+      expressions: Object.freeze([
+        { value: 'default', label: 'Theo kịch bản cảnh' },
+        { value: 'neutral', label: 'Bình thường' },
+        { value: 'grin', label: 'Cười tươi' },
+        { value: 'shock', label: 'Sửng sốt' },
+        { value: 'stern', label: 'Nghiêm nghị' },
+        { value: 'smile', label: 'Tự tin' },
+      ]),
+      poses: Object.freeze([
+        { value: 'default', label: 'Theo kịch bản cảnh' },
+        { value: 'hang', label: 'Thả tay' },
+        { value: 'wave', label: 'Vẫy tay' },
+        { value: 'point', label: 'Chỉ tay' },
+        { value: 'up', label: 'Giơ tay cao' },
+      ]),
+      dofStrengths: Object.freeze([
+        { value: 'default', label: 'Mặc định' },
+        { value: 'off', label: 'Tắt xóa phông' },
+        { value: 'soft', label: 'Xóa phông nhẹ' },
+        { value: 'strong', label: 'Xóa phông mạnh' },
+      ]),
+      visualFoundations: Object.freeze([
+        { value: 'enhanced', label: 'Nâng cao 2D+3D (Enhanced)' },
+        { value: 'baseline', label: 'Chuẩn gốc (Baseline)' },
       ]),
     }),
   }),
@@ -282,6 +373,7 @@ function defaultSceneOverrides(tpl) {
       signTitle: '24/7 SNACKS',
       aisleLabel: 'CRUNCH AISLE',
       hoodieColor: '',
+      visualFoundation: 'baseline',
     };
   }
   if (tpl.templateId === 'plaza-courier-10s') {
@@ -290,6 +382,13 @@ function defaultSceneOverrides(tpl) {
       signTitle: 'SUNNY PLAZA',
       characterStyle: 'courierKid',
       parcelColor: 'coral',
+      visualFoundation: 'baseline',
+    };
+  }
+  if (tpl.templateId === 'mine-salting-20s') {
+    return {
+      lightingPreset: 'auto',
+      visualFoundation: 'enhanced',
     };
   }
   return {};
@@ -466,6 +565,14 @@ export function validateProjectPatch(existing, patch) {
         sc.parcelColor,
         cur.parcelColor || 'coral',
         'sceneOverrides.parcelColor'
+      );
+    }
+    if (opts.visualFoundations) {
+      cur.visualFoundation = validateAllowedOption(
+        opts.visualFoundations,
+        sc.visualFoundation,
+        cur.visualFoundation || (tpl.templateId === 'mine-salting-20s' ? 'enhanced' : 'baseline'),
+        'sceneOverrides.visualFoundation'
       );
     }
     next.sceneOverrides = cur;

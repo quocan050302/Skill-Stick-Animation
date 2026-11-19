@@ -185,7 +185,7 @@ export async function fetchPreviewFrame(
 
 export async function startRenderJob(
   projectId: string,
-  options: { mode: 'full' | 'bounded'; startFrame?: number; endFrame?: number; workers?: number }
+  options: { mode: 'full' | 'bounded'; outputPreset?: 'standard' | 'native_4k'; startFrame?: number; endFrame?: number; workers?: number }
 ): Promise<RenderJob> {
   const res = await requestJson<{ ok: boolean; job: RenderJob }>(
     `/api/projects/${encodeURIComponent(projectId)}/jobs`,

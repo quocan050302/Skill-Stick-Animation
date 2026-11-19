@@ -13,6 +13,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { resolveOutputPreset } from '../../app/shared/contract.mjs';
 import { createRendererAdapter } from '../../engine/adapters/renderer_adapter.mjs';
 import {
   atomicWriteFileSync,
@@ -64,6 +65,7 @@ function parseCli(argv) {
     projectId: 'soldier-baseline',
     reportPath: null,
     overridesFile: null,
+    outputPreset: 'standard',
   };
   for (let i = 0; i < argv.length; i++) {
     const k = argv[i];
@@ -78,33 +80,46 @@ function parseCli(argv) {
     else if (k === '--project-id') opts.projectId = argv[++i];
     else if (k === '--report') opts.reportPath = path.resolve(argv[++i]);
     else if (k === '--overrides-file') opts.overridesFile = path.resolve(argv[++i]);
+    else if (k === '--output-preset') opts.outputPreset = argv[++i];
   }
   return opts;
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === __filename) {
   const opts = parseCli(process.argv.slice(2));
+  const preset = resolveOutputPreset(opts.outputPreset);
   const frames = parseFrameSpec(opts.framesSpec);
   const ext = opts.format === 'png' ? 'png' : 'jpg';
   const manifestPath = path.join(opts.outDir, 'resume-manifest.json');
+  const perFrameEst = preset.id === 'native_4k' ? 2400 * 1024 : 512 * 1024;
 
   const disk = checkDiskPreflight(opts.outDir, {
-    estimatedBytes: frames.length * 512 * 1024,
+    estimatedBytes: frames.length * perFrameEst,
   });
   fs.mkdirSync(opts.outDir, { recursive: true });
-
-  let priorHashes = {};
-  if (opts.resume && fs.existsSync(manifestPath)) {
-    try {
-      priorHashes = JSON.parse(fs.readFileSync(manifestPath, 'utf8')).frames || {};
-    } catch {
-      priorHashes = {};
-    }
-  }
 
   const overrides = opts.overridesFile
     ? JSON.parse(fs.readFileSync(opts.overridesFile, 'utf8'))
     : undefined;
+  const visualFoundation = overrides?.scene?.visualFoundation || 'baseline';
+
+  let prevManifest = null;
+  let priorHashes = {};
+  if (opts.resume && fs.existsSync(manifestPath)) {
+    try {
+      prevManifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+      if (
+        prevManifest.width === preset.width &&
+        prevManifest.height === preset.height &&
+        (!prevManifest.outputPreset || prevManifest.outputPreset === preset.id) &&
+        (!prevManifest.visualFoundation || prevManifest.visualFoundation === visualFoundation)
+      ) {
+        priorHashes = prevManifest.frames || {};
+      }
+    } catch {
+      priorHashes = {};
+    }
+  }
 
   const adapter = createRendererAdapter(ROOT);
   const t0 = Date.now();
@@ -112,6 +127,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === __filename) {
     const meta = await adapter.initializeRenderer({
       projectId: opts.projectId,
       mode: 'original_engine',
+      outputPreset: preset.id,
       webDir: opts.webDir || undefined,
       overrides,
     });
@@ -126,7 +142,14 @@ if (process.argv[1] && path.resolve(process.argv[1]) === __filename) {
       const outPath = path.join(opts.outDir, fileName);
 
       if (opts.resume && priorHashes[fileName]) {
-        const chk = validateExistingResumeFrame(outPath, priorHashes[fileName], 1080, 1920);
+        const chk = validateExistingResumeFrame(
+          outPath,
+          priorHashes[fileName],
+          preset.width,
+          preset.height,
+          prevManifest,
+          { outputPreset: preset.id, visualFoundation }
+        );
         if (chk.valid) {
           skippedViaResume += 1;
           rendered.push({ frameIndex: f, fileName, bytes: chk.bytes, sha256: chk.sha256, resumed: true });
@@ -159,8 +182,10 @@ if (process.argv[1] && path.resolve(process.argv[1]) === __filename) {
             JSON.stringify(
               {
                 projectId: opts.projectId,
-                width: 1080,
-                height: 1920,
+                outputPreset: preset.id,
+                visualFoundation,
+                width: preset.width,
+                height: preset.height,
                 fps: 30,
                 frames: priorHashes,
                 updatedAtUtc: new Date().toISOString(),

@@ -1,0 +1,86 @@
+{
+  "overall_ok": true,
+  "steps": [
+    {
+      "name": "frontend_typecheck_and_build",
+      "command": "npm.cmd run build",
+      "returncode": 0,
+      "elapsed_seconds": 0.97,
+      "ok": true
+    },
+    {
+      "name": "short02_unit_tests",
+      "command": "node --test tests/unit/test_short02_backend.mjs",
+      "returncode": 0,
+      "elapsed_seconds": 0.44,
+      "ok": true
+    },
+    {
+      "name": "short03a_unit_and_negative_qa",
+      "command": "node --test tests/unit/test_short03a_visual_and_4k.mjs",
+      "returncode": 0,
+      "elapsed_seconds": 1.31,
+      "ok": true
+    },
+    {
+      "name": "short01_regression_suite",
+      "command": "C:\\Users\\QuocAn\\AppData\\Local\\Programs\\Python\\Python312\\python.exe tests/run_all.py",
+      "returncode": 0,
+      "elapsed_seconds": 9.42,
+      "ok": true
+    },
+    {
+      "name": "short02_api_integration",
+      "command": "node --test tests/integration/test_short02_api.mjs",
+      "returncode": 0,
+      "elapsed_seconds": 23.65,
+      "ok": true
+    },
+    {
+      "name": "short03a_cross_niche_and_4k_e2e",
+      "command": "node tests/integration/test_short03a_cross_niche_and_e2e.mjs",
+      "returncode": 0,
+      "elapsed_seconds": 77.66,
+      "ok": true
+    },
+    {
+      "name": "short02_playwright_e2e",
+      "command": "node tests/e2e/test_studio_e2e.mjs",
+      "returncode": 0,
+      "elapsed_seconds": 58.67,
+      "ok": true
+    },
+    {
+      "name": "unified_dev_smoke",
+      "command": "node tools/dev.mjs --mode dev (smoke)",
+      "returncode": 0,
+      "elapsed_seconds": 1.21,
+      "ok": true,
+      "detail": "Unified FE+BE proxy returned HTTP 200 on both / and /api/health"
+    }
+  ],
+  "audioMixSummary": {
+    "provenance": "NEW_IMPLEMENTATION_SKILL_SPEC_LINEAR_MIXER",
+    "dynamic_ducking": false,
+    "sample_rate": 48000,
+    "channels": 2,
+    "samples": 960000,
+    "duration_seconds": 20.0,
+    "narration_gated_rms": 0.101655,
+    "narration_active_ratio": 0.7925,
+    "music_linear_gain": 0.579878,
+    "music_target_ratio": 0.5,
+    "music_measured_ratio": 0.500603,
+    "music_measured_db_rel_narration": -6.0101,
+    "sfx_linear_gain": 0.456721,
+    "sfx_peak_after_cap": 0.369301,
+    "sfx_peak_cap": 0.65,
+    "pre_limit_peak": 0.943841,
+    "master_linear_gain": 1.0,
+    "limiter_engaged": false,
+    "final_peak": 0.943841,
+    "master_peak_cap": 0.96,
+    "all_samples_finite": true,
+    "clipped_samples": 0
+  }
+}

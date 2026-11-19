@@ -66,6 +66,7 @@ export interface SceneOverrides {
   hoodieColor?: string;
   characterStyle?: string;
   parcelColor?: string;
+  visualFoundation?: 'baseline' | 'enhanced';
 }
 
 export interface ShotOverride {
@@ -81,6 +82,9 @@ export interface ExportSummary {
   exportId: string;
   jobId: string;
   mode: 'full' | 'bounded';
+  outputPreset?: 'standard' | 'native_4k';
+  width?: number;
+  height?: number;
   frameCount: number;
   startFrame: number;
   endFrame: number;

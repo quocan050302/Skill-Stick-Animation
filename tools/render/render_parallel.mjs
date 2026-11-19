@@ -11,6 +11,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { resolveOutputPreset } from '../../app/shared/contract.mjs';
 import { atomicWriteFileSync, checkDiskPreflight, registerCleanupHandlers } from './frame_runner.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -27,9 +28,10 @@ function parseCli(argv) {
     format: 'jpeg',
     quality: 94,
     resume: true,
-    workers: Math.min(2, Math.max(1, Math.floor(os.cpus().length / 4))),
+    workers: null,
     reportPath: null,
     overridesFile: null,
+    outputPreset: 'standard',
   };
   for (let i = 0; i < argv.length; i++) {
     const k = argv[i];
@@ -40,22 +42,35 @@ function parseCli(argv) {
     else if (k === '--end') opts.endFrame = Number(argv[++i]);
     else if (k === '--format') opts.format = argv[++i];
     else if (k === '--quality') opts.quality = Number(argv[++i]);
-    else if (k === '--workers') opts.workers = Math.min(3, Math.max(1, Number(argv[++i])));
+    else if (k === '--workers') opts.workers = Number(argv[++i]);
     else if (k === '--no-resume') opts.resume = false;
     else if (k === '--report') opts.reportPath = path.resolve(argv[++i]);
     else if (k === '--overrides-file') opts.overridesFile = path.resolve(argv[++i]);
+    else if (k === '--output-preset') opts.outputPreset = argv[++i];
   }
   return opts;
 }
 
 const opts = parseCli(process.argv.slice(2));
+const preset = resolveOutputPreset(opts.outputPreset);
+const hostFreeGb = os.freemem() / (1024 * 1024 * 1024);
+const cpuCount = os.cpus().length;
+// Bound native 4K workers to available RAM (~1.2GB per 4K Chromium SwiftShader instance)
+const safe4kCap = hostFreeGb >= 4.5 && cpuCount >= 8 ? 3 : hostFreeGb >= 2.5 ? 2 : 1;
+const maxWorkersAllowed = preset.id === 'native_4k' ? safe4kCap : Math.min(4, Math.max(2, Math.floor(cpuCount / 3)));
+const defaultWorkers =
+  preset.id === 'native_4k'
+    ? Math.min(2, safe4kCap)
+    : Math.min(3, Math.max(1, Math.floor(cpuCount / 4)));
+const boundedWorkers = Math.min(maxWorkersAllowed, Math.max(1, Number(opts.workers || defaultWorkers)));
 const totalFrames = opts.endFrame - opts.startFrame + 1;
-const disk = checkDiskPreflight(opts.outDir, { estimatedBytes: totalFrames * 512 * 1024 });
+const perFrameEst = preset.id === 'native_4k' ? 2400 * 1024 : 512 * 1024;
+const disk = checkDiskPreflight(opts.outDir, { estimatedBytes: totalFrames * perFrameEst });
 fs.mkdirSync(opts.outDir, { recursive: true });
 
 // Partition frames into contiguous shards
 const shards = [];
-const workerCount = Math.min(opts.workers, totalFrames);
+const workerCount = Math.min(boundedWorkers, totalFrames);
 const perShard = Math.ceil(totalFrames / workerCount);
 for (let w = 0; w < workerCount; w++) {
   const a = opts.startFrame + w * perShard;
@@ -85,6 +100,7 @@ try {
       '--frames', `${sh.a}-${sh.b}`,
       '--format', opts.format,
       '--quality', String(opts.quality),
+      '--output-preset', preset.id,
       '--report', shardReport,
     ];
     if (opts.webDir) args.push('--web-dir', opts.webDir);
@@ -119,6 +135,8 @@ try {
   const elapsedMs = Date.now() - t0;
 
   // Consolidate final resume manifest cleanly
+  const overridesData = opts.overridesFile ? JSON.parse(fs.readFileSync(opts.overridesFile, 'utf8')) : null;
+  const visualFoundation = overridesData?.scene?.visualFoundation || 'baseline';
   const framesMap = Object.fromEntries(allFrames.map((f) => [f.fileName, f.sha256]));
   atomicWriteFileSync(
     path.join(opts.outDir, 'resume-manifest.json'),
@@ -126,8 +144,10 @@ try {
       JSON.stringify(
         {
           projectId: opts.projectId,
-          width: 1080,
-          height: 1920,
+          outputPreset: preset.id,
+          visualFoundation,
+          width: preset.width,
+          height: preset.height,
           fps: 30,
           frames: framesMap,
           updatedAtUtc: new Date().toISOString(),
@@ -141,6 +161,10 @@ try {
 
   const summary = {
     projectId: opts.projectId,
+    outputPreset: preset.id,
+    visualFoundation,
+    width: preset.width,
+    height: preset.height,
     workers: workerCount,
     range: { startFrame: opts.startFrame, endFrame: opts.endFrame, count: totalFrames },
     renderedCount: shardReports.reduce((s, r) => s + r.renderedCount, 0),
@@ -152,6 +176,7 @@ try {
     pageErrors: shardReports.reduce((s, r) => s + (r.metadata?.pageErrorCount || 0), 0),
     browserVersion: shardReports[0]?.metadata?.browserVersion || null,
     launchProfile: shardReports[0]?.metadata?.launchProfile || null,
+    webglProof: shardReports[0]?.metadata?.webgl || null,
     outDir: opts.outDir,
     frameCount: allFrames.length,
     firstFrameSha256: allFrames[0]?.sha256 || null,

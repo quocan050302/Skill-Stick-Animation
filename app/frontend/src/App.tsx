@@ -333,6 +333,7 @@ export function App() {
 
   const handleStartRender = async (options: {
     mode: 'full' | 'bounded';
+    outputPreset?: 'standard' | 'native_4k';
     startFrame?: number;
     endFrame?: number;
     workers: number;

@@ -12,7 +12,7 @@ import path from 'node:path';
 import { promisify } from 'node:util';
 import { checkOriginalEngineFiles, EngineInputBlockedError } from '../../../engine/adapters/renderer_adapter.mjs';
 import { atomicWriteFileSync } from '../../../tools/render/frame_runner.mjs';
-import { RENDER_CONTRACT, validateFrameRange } from '../../shared/contract.mjs';
+import { RENDER_CONTRACT, resolveOutputPreset, validateFrameRange } from '../../shared/contract.mjs';
 import { deriveFrameCount, TEMPLATES } from '../../shared/project_schema.mjs';
 import { StoreError } from './project_store.mjs';
 
@@ -328,6 +328,7 @@ export function createJobManager(
         appendLog(j, `Khởi chạy render_parallel.mjs (${j.workers} worker)`);
       });
 
+      const preset = resolveOutputPreset(job.outputPreset || 'standard');
       const renderArgs = [
         'tools/render/render_parallel.mjs',
         '--project-id',
@@ -346,6 +347,8 @@ export function createJobManager(
         String(job.quality),
         '--workers',
         String(job.workers),
+        '--output-preset',
+        preset.id,
         '--report',
         reportPath,
       ];
@@ -356,7 +359,7 @@ export function createJobManager(
       const framesStartTime = Date.now();
       let lastReportedCount = -1;
       await runTrackedCommand(jobId, process.execPath, renderArgs, {
-        timeoutMs: 900_000,
+        timeoutMs: preset.id === 'native_4k' ? 1_800_000 : 900_000,
         onTick: () => {
           const done = countRenderedFrames(framesDir, job.startFrame, job.endFrame, frameExt);
           if (done !== lastReportedCount) {
@@ -477,10 +480,19 @@ export function createJobManager(
         'from pathlib import Path',
         `sys.path.insert(0, ${JSON.stringify(path.join(projectRoot, 'tools', 'qa'))})`,
         'import export_mp4',
-        `res = export_mp4.export_frames_to_mp4(Path(${JSON.stringify(encodeDir)}), Path(${JSON.stringify(mp4Path)}), fps=30, frame_pattern=${JSON.stringify(pattern)}, audio_wav=Path(${JSON.stringify(finalAudioWav)}), timeout_seconds=180)`,
+        `res = export_mp4.export_frames_to_mp4(Path(${JSON.stringify(encodeDir)}), Path(${JSON.stringify(mp4Path)}), fps=30, frame_pattern=${JSON.stringify(pattern)}, audio_wav=Path(${JSON.stringify(finalAudioWav)}), timeout_seconds=360, expected_width=${preset.width}, expected_height=${preset.height})`,
         'print(json.dumps(res))',
       ].join('\n');
-      await runTrackedCommand(jobId, pythonBin, ['-c', encodePy], { timeoutMs: 180_000 });
+      await runTrackedCommand(jobId, pythonBin, ['-c', encodePy], { timeoutMs: 360_000 });
+
+      let webglProof = null;
+      if (fs.existsSync(reportPath)) {
+        try {
+          webglProof = JSON.parse(fs.readFileSync(reportPath, 'utf8'))?.webglProof || null;
+        } catch {
+          webglProof = null;
+        }
+      }
 
       updateJob(jobId, (j) => {
         j.status = 'qa';
@@ -495,6 +507,8 @@ export function createJobManager(
         mp4Path,
         framesDir,
         expectedFrameCount: job.totalFrames,
+        outputPreset: preset.id,
+        webglProof,
         hasAudioTrack: true,
         hasVoiceover: Boolean(voSrc),
         audioMetrics,
@@ -529,6 +543,9 @@ export function createJobManager(
         exportId: job.exportId,
         jobId: job.jobId,
         mode: job.mode,
+        outputPreset: preset.id,
+        width: preset.width,
+        height: preset.height,
         frameCount: job.totalFrames,
         startFrame: job.startFrame,
         endFrame: job.endFrame,
@@ -671,6 +688,7 @@ export function createJobManager(
     }
 
     const mode = options.mode === 'bounded' ? 'bounded' : 'full';
+    const preset = resolveOutputPreset(options.outputPreset || 'standard');
     const maxFrame = project.durationFrames - 1;
     const startFrame = mode === 'bounded' && Number.isInteger(options.startFrame) ? options.startFrame : 0;
     const endFrame =
@@ -682,13 +700,17 @@ export function createJobManager(
 
     validateFrameRange(startFrame, endFrame, project.durationFrames);
     const totalFrames = endFrame - startFrame + 1;
-    const requestedWorkers = Number(options.workers || (totalFrames >= 12 ? 2 : 1));
-    const workers = requestedWorkers >= 2 ? 2 : 1;
+    const requestedWorkers = Number(options.workers || (preset.id === 'native_4k' ? 1 : totalFrames >= 12 ? 2 : 1));
+    const workers = preset.id === 'native_4k' ? 1 : requestedWorkers >= 2 ? 2 : 1;
     const format = project.renderPreset?.format === 'png' ? 'png' : 'jpeg';
     const quality = Number(project.renderPreset?.quality || 94);
 
     const { dir: projectDir } = projectStore.resolveProjectDir(project.projectId);
-    checkDiskPreflight(projectDir);
+    const requiredMinDisk =
+      preset.id === 'native_4k'
+        ? Math.max(MIN_FREE_DISK_BYTES, totalFrames * 2400 * 1024 + 512 * 1024 * 1024)
+        : MIN_FREE_DISK_BYTES;
+    checkDiskPreflight(projectDir, requiredMinDisk);
 
     const stamp = new Date().toISOString().replace(/[-:.TZ]/g, '').slice(0, 14);
     const rand = crypto.randomBytes(3).toString('hex');
@@ -704,6 +726,9 @@ export function createJobManager(
       templateId: project.templateId,
       renderHash: project.renderHash,
       mode,
+      outputPreset: preset.id,
+      width: preset.width,
+      height: preset.height,
       startFrame,
       endFrame,
       totalFrames,

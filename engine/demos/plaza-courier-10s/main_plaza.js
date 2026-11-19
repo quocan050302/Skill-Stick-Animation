@@ -8,10 +8,15 @@ import * as THREE from 'three';
 import * as P from './paint_plaza.js';
 import * as Cast from './cast_plaza.js';
 import { TOTAL, shotAt, camAt, dofAt, lightFor, worldAt, actorsAt, fxAt } from './story_plaza.js';
+import * as Visual from '/visual/index.js';
 
-const W = 1080;
-const H = 1920;
+const outCfg = (typeof globalThis !== 'undefined' && globalThis.__RENDER_OUTPUT_CONFIG__) || {};
+const W = outCfg.width || 1080;
+const H = outCfg.height || 1920;
+const SCALE = H / 1920;
 const canvas = document.getElementById('c');
+canvas.width = W;
+canvas.height = H;
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, preserveDrawingBuffer: true });
 renderer.setPixelRatio(1);
 renderer.setSize(W, H, false);
@@ -189,7 +194,9 @@ class Card {
     this.t = new THREE.CanvasTexture(this.c);
     this.t.colorSpace = THREE.SRGBColorSpace;
     this.t.anisotropy = 4;
-    this.mat = new THREE.MeshBasicMaterial({ map: this.t, transparent: true, alphaTest: 0.02, side: THREE.DoubleSide, fog: true });
+    this.basicMat = new THREE.MeshBasicMaterial({ map: this.t, transparent: true, alphaTest: 0.02, side: THREE.DoubleSide, fog: true });
+    this.litMat = Visual.createLitCardMaterial(this.t, { pxScale: SCALE }, { charTint: '#fff5ec', charShade: 0.85, rimStrength: 0.14 });
+    this.mat = this.basicMat;
     this.mesh = new THREE.Mesh(cardGeo, this.mat);
     this.mesh.userData.nd = cardNd(this.t);
     this.mesh.castShadow = true;
@@ -285,6 +292,15 @@ const dofScene = fs(new THREE.ShaderMaterial({
 }));
 dofScene.children[0].material.toneMapped = false;
 
+const enhInkPass = Visual.createInkGradePass(W, H, { colorTexture: rtColor.texture, ndTexture: rtNd.texture, basePx: 2.3, farFadeStart: 60, farFadeEnd: 180, grainAmount: 0.012 });
+const enhDofPass = Visual.createDofPass(W, H, { srcTexture: rtInk.texture, ndTexture: rtNd.texture });
+const isEnhancedMode = () => globalThis.__STUDIO_OVERRIDES__?.scene?.visualFoundation === 'enhanced';
+const ENH_PROFILE_MAP = {
+  morningSun: 'daylightPlaza',
+  goldenHour: 'daylightPlaza',
+  nightPlaza: 'coolDramatic',
+};
+
 let appliedSignTitle = 'SUNNY PLAZA';
 let appliedParcelColor = 'coral';
 const PARCEL_HEX = { coral: '#e66e4e', teal: '#369a94', gold: '#e6b13c' };
@@ -349,7 +365,7 @@ function updateWorld(W_) {
   });
 }
 
-function drawActors(list) {
+function drawActors(list, L, enh) {
   cards.forEach((c) => { c.mesh.visible = c.blob.visible = false; });
   list.forEach((a, i) => {
     const c = getCard(i);
@@ -359,13 +375,25 @@ function drawActors(list) {
     const s = a.s || 1;
     c.mesh.scale.set(s, s, s);
     c.mesh.rotation.set(0, Math.atan2(camera.position.x - a.x, camera.position.z - a.z), a.roll || 0);
-    c.mat.color.set(a.tint || '#ffffff');
     c.mesh.castShadow = a.shadow !== false;
     c.mesh.renderOrder = a.order || 2;
+    if (enh && a.order !== 6) {
+      c.mesh.material = c.litMat;
+      c.mesh.receiveShadow = true;
+      Visual.updateCardLight(c.litMat, L, { pxScale: SCALE });
+    } else {
+      c.mesh.material = c.basicMat;
+      c.mesh.receiveShadow = false;
+      c.basicMat.color.set(a.tint || '#ffffff');
+    }
     if (a.blob !== false) {
       c.blob.visible = true;
-      c.blob.position.set(a.x, 0.02, a.z);
-      c.blob.scale.set(0.95 * s, 0.6 * s, 1);
+      if (enh) {
+        Visual.makeContactShadow(c.blob, a, L);
+      } else {
+        c.blob.position.set(a.x, 0.02, a.z);
+        c.blob.scale.set(0.95 * s, 0.6 * s, 1);
+      }
     }
   });
 }
@@ -390,8 +418,9 @@ const swapForNd = (on) => {
 
 window.renderFrame = (f) => {
   syncSceneOverrides();
+  const enh = isEnhancedMode();
   const S = shotAt(f);
-  const L = lightFor(S);
+  const L = enh ? Visual.getLookProfile({ ...Visual.LOOK_PROFILES[ENH_PROFILE_MAP[S.light] || 'daylightPlaza'], ...lightFor(S) }) : lightFor(S);
   const C = camAt(f);
   const W_ = worldAt(f);
 
@@ -431,7 +460,7 @@ window.renderFrame = (f) => {
   sc.left = -ext; sc.right = ext; sc.top = ext; sc.bottom = -ext; sc.near = 1; sc.far = 80;
   sc.updateProjectionMatrix();
 
-  drawActors([...actorsAt(f, Cast), ...fxAt(f, Cast)]);
+  drawActors([...actorsAt(f, Cast), ...fxAt(f, Cast)], L, enh);
 
   renderer.setRenderTarget(rtColor);
   renderer.setClearColor(0x000000, 1);
@@ -453,18 +482,53 @@ window.renderFrame = (f) => {
   renderer.shadowMap.enabled = sm;
   renderer.shadowMap.autoUpdate = true;
 
-  inkU.flash.value = C.flash || 0;
-  renderer.setRenderTarget(rtInk);
-  renderer.render(inkScene, fsCam);
+  if (enh || SCALE !== 1) {
+    Visual.updateInkGradeUniforms(enhInkPass, {
+      sat: L.sat,
+      lift: L.lift || '#000000',
+      gain: L.gain || '#ffffff',
+      vig: L.vig ?? 0.16,
+      flash: C.flash || 0,
+      grainSeed: f,
+      grainAmount: enh ? 0.012 : 0.0,
+    });
+    renderer.setRenderTarget(rtInk);
+    renderer.render(enhInkPass.scene, fsCam);
+  } else {
+    inkU.flash.value = C.flash || 0;
+    renderer.setRenderTarget(rtInk);
+    renderer.render(inkScene, fsCam);
+  }
 
   const D = dofAt(f);
-  dofU.focus.value = D.focus;
-  dofU.cinf.value = D.cinf;
-  dofU.near.value = D.near ?? 1;
-  renderer.setRenderTarget(null);
-  renderer.render(dofScene, fsCam);
+  if (enh || SCALE !== 1) {
+    Visual.updateDofUniforms(enhDofPass, {
+      focus: D.focus,
+      cinf: D.cinf,
+      near: D.near ?? 1,
+    });
+    renderer.setRenderTarget(null);
+    renderer.render(enhDofPass.scene, fsCam);
+  } else {
+    dofU.focus.value = D.focus;
+    dofU.cinf.value = D.cinf;
+    dofU.near.value = D.near ?? 1;
+    renderer.setRenderTarget(null);
+    renderer.render(dofScene, fsCam);
+  }
   return true;
 };
+
+window.getRenderBufferMetrics = () => ({
+  canvasW: canvas.width,
+  canvasH: canvas.height,
+  rtColorW: rtColor.width,
+  rtColorH: rtColor.height,
+  rtNdW: rtNd.width,
+  rtNdH: rtNd.height,
+  scaleFactor: SCALE,
+  visualFoundation: isEnhancedMode() ? 'enhanced' : 'baseline',
+});
 
 if (globalThis.__STUDIO_OVERRIDES__) {
   syncSceneOverrides();

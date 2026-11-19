@@ -144,6 +144,7 @@ export function createRendererAdapter(projectRoot = PROJECT_ROOT) {
         mounts = [
           { prefix: '/three', dir: threeDir },
           { prefix: '/toonbase', dir: path.join(projectRoot, 'engine', 'demos', 'lib') },
+          { prefix: '/visual', dir: path.join(projectRoot, 'engine', 'visual') },
           { prefix: '', dir: customWebDir },
         ];
       } else {
@@ -183,7 +184,7 @@ export function createRendererAdapter(projectRoot = PROJECT_ROOT) {
     let page;
     try {
       context = await browser.newContext({
-        viewport: { width: RENDER_CONTRACT.width, height: RENDER_CONTRACT.height },
+        viewport: { width: project.width, height: project.height },
         deviceScaleFactor: 1,
       });
       page = await context.newPage();
@@ -197,6 +198,15 @@ export function createRendererAdapter(projectRoot = PROJECT_ROOT) {
       });
 
       const url = `${server.baseUrl}${entryPath}`;
+      const outputCfg = {
+        outputPreset: project.outputPreset,
+        width: project.width,
+        height: project.height,
+        scaleFactor: Number((project.height / 1920).toFixed(4)),
+      };
+      await page.addInitScript((cfg) => {
+        window.__RENDER_OUTPUT_CONFIG__ = cfg;
+      }, outputCfg);
       if (projectInput.overrides && typeof projectInput.overrides === 'object') {
         const cleanOverrides = JSON.parse(JSON.stringify(projectInput.overrides));
         await page.addInitScript((ov) => {
@@ -207,7 +217,7 @@ export function createRendererAdapter(projectRoot = PROJECT_ROOT) {
       await page.waitForFunction(
         () => window.ready === true && typeof window.renderFrame === 'function',
         null,
-        { timeout: 20000 }
+        { timeout: 25000 }
       );
       if (projectInput.overrides && typeof projectInput.overrides === 'object') {
         const cleanOverrides = JSON.parse(JSON.stringify(projectInput.overrides));
@@ -225,21 +235,48 @@ export function createRendererAdapter(projectRoot = PROJECT_ROOT) {
       }
 
       const webglProbe = await page.evaluate(() => {
-        if (typeof window.getSmokeCapabilities === 'function') {
-          return window.getSmokeCapabilities();
-        }
         const canvas = document.querySelector('canvas');
+        const gl = canvas ? canvas.getContext('webgl2') || canvas.getContext('webgl') : null;
+        const base =
+          typeof window.getSmokeCapabilities === 'function'
+            ? window.getSmokeCapabilities()
+            : {
+                canvasWidth: canvas ? canvas.width : 0,
+                canvasHeight: canvas ? canvas.height : 0,
+                totalFrames: typeof window.TOTAL === 'number' ? window.TOTAL : null,
+                sceneType: 'ORIGINAL_KIT_ENGINE',
+              };
+        const rtMetrics = typeof window.getRenderBufferMetrics === 'function' ? window.getRenderBufferMetrics() : null;
         return {
-          canvasWidth: canvas ? canvas.width : 0,
-          canvasHeight: canvas ? canvas.height : 0,
-          totalFrames: typeof window.TOTAL === 'number' ? window.TOTAL : null,
-          sceneType: 'ORIGINAL_KIT_ENGINE',
+          ...base,
+          nativeDrawingBufferWidth: gl ? gl.drawingBufferWidth : (canvas ? canvas.width : 0),
+          nativeDrawingBufferHeight: gl ? gl.drawingBufferHeight : (canvas ? canvas.height : 0),
+          maxTextureSize: gl ? gl.getParameter(gl.MAX_TEXTURE_SIZE) : null,
+          maxRenderbufferSize: gl ? gl.getParameter(gl.MAX_RENDERBUFFER_SIZE) : null,
+          maxViewportDims: gl ? Array.from(gl.getParameter(gl.MAX_VIEWPORT_DIMS)) : null,
+          upscaledFromLowerRes: false,
+          renderTargets: rtMetrics,
         };
       });
 
-      if (webglProbe.canvasWidth !== RENDER_CONTRACT.width || webglProbe.canvasHeight !== RENDER_CONTRACT.height) {
+      if (
+        webglProbe.maxRenderbufferSize &&
+        (project.width > webglProbe.maxRenderbufferSize || project.height > webglProbe.maxRenderbufferSize)
+      ) {
+        throw new EngineInputBlockedError(
+          `Requested resolution ${project.width}x${project.height} exceeds GPU MAX_RENDERBUFFER_SIZE (${webglProbe.maxRenderbufferSize}).`,
+          []
+        );
+      }
+
+      if (
+        webglProbe.canvasWidth !== project.width ||
+        webglProbe.canvasHeight !== project.height ||
+        webglProbe.nativeDrawingBufferWidth !== project.width ||
+        webglProbe.nativeDrawingBufferHeight !== project.height
+      ) {
         throw new Error(
-          `Canvas dimensions mismatch: expected ${RENDER_CONTRACT.width}x${RENDER_CONTRACT.height}, got ${webglProbe.canvasWidth}x${webglProbe.canvasHeight}`
+          `Native canvas/drawingBuffer mismatch: expected ${project.width}x${project.height}, got canvas=${webglProbe.canvasWidth}x${webglProbe.canvasHeight}, gl=${webglProbe.nativeDrawingBufferWidth}x${webglProbe.nativeDrawingBufferHeight}`
         );
       }
 
@@ -257,8 +294,9 @@ export function createRendererAdapter(projectRoot = PROJECT_ROOT) {
         metadata: {
           projectId: project.projectId,
           mode: project.mode,
-          width: RENDER_CONTRACT.width,
-          height: RENDER_CONTRACT.height,
+          outputPreset: project.outputPreset,
+          width: project.width,
+          height: project.height,
           fps: RENDER_CONTRACT.fps,
           browserVersion: browser.version(),
           launchProfile: profile,
@@ -332,10 +370,12 @@ export function createRendererAdapter(projectRoot = PROJECT_ROOT) {
       buffer = await canvas.screenshot(screenshotOpts);
     }
 
+    const expectedWidth = state.project?.width || RENDER_CONTRACT.width;
+    const expectedHeight = state.project?.height || RENDER_CONTRACT.height;
     const dims = parseImageDimensions(buffer);
-    if (!dims || dims.width !== RENDER_CONTRACT.width || dims.height !== RENDER_CONTRACT.height) {
+    if (!dims || dims.width !== expectedWidth || dims.height !== expectedHeight) {
       throw new Error(
-        `Captured image failed header/dimension verification at frame ${frameIndex}: ${JSON.stringify(dims)}`
+        `Captured image failed header/dimension verification at frame ${frameIndex}: expected ${expectedWidth}x${expectedHeight}, got ${JSON.stringify(dims)}`
       );
     }
 
@@ -377,18 +417,28 @@ export function createRendererAdapter(projectRoot = PROJECT_ROOT) {
     const resumeManifestPath = path.join(outDir, 'resume-manifest.json');
     const maxRetries = options.maxRetries ?? 2;
 
-    const estimatedBytes = range.count * 1024 * 1024; // conservative ~1 MB/frame estimate
+    const expectedWidth = state.project?.width || RENDER_CONTRACT.width;
+    const expectedHeight = state.project?.height || RENDER_CONTRACT.height;
+    const perFrameEst = expectedWidth === 2160 ? 3 * 1024 * 1024 : 1024 * 1024;
+    const estimatedBytes = range.count * perFrameEst;
     const disk = checkDiskPreflight(outDir, {
       estimatedBytes,
       lowWatermarkBytes: options.lowWatermarkBytes,
     });
     fs.mkdirSync(outDir, { recursive: true });
 
+    let prevManifest = null;
     let priorHashes = {};
     if (options.resume && fs.existsSync(resumeManifestPath)) {
       try {
-        const prev = JSON.parse(fs.readFileSync(resumeManifestPath, 'utf8'));
-        priorHashes = prev.frames || {};
+        prevManifest = JSON.parse(fs.readFileSync(resumeManifestPath, 'utf8'));
+        if (
+          prevManifest.width === expectedWidth &&
+          prevManifest.height === expectedHeight &&
+          (!prevManifest.outputPreset || prevManifest.outputPreset === state.project?.outputPreset)
+        ) {
+          priorHashes = prevManifest.frames || {};
+        }
       } catch {
         priorHashes = {};
       }
@@ -413,8 +463,10 @@ export function createRendererAdapter(projectRoot = PROJECT_ROOT) {
         const check = validateExistingResumeFrame(
           filePath,
           priorHashes[fileName],
-          RENDER_CONTRACT.width,
-          RENDER_CONTRACT.height
+          expectedWidth,
+          expectedHeight,
+          prevManifest,
+          { outputPreset: state.project?.outputPreset }
         );
         if (check.valid) {
           skippedViaResume += 1;
@@ -460,8 +512,9 @@ export function createRendererAdapter(projectRoot = PROJECT_ROOT) {
             {
               projectId: state.project?.projectId,
               mode: state.project?.mode,
-              width: RENDER_CONTRACT.width,
-              height: RENDER_CONTRACT.height,
+              outputPreset: state.project?.outputPreset || 'standard',
+              width: expectedWidth,
+              height: expectedHeight,
               fps: RENDER_CONTRACT.fps,
               frames: priorHashes,
               updatedAtUtc: new Date().toISOString(),

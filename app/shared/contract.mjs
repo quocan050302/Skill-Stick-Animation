@@ -1,10 +1,29 @@
 /**
- * Shared Engine API contract constants & validators for SHORT-01 / SHORT-02.
+ * Shared Engine API contract constants & validators for SHORT-01 / SHORT-02 / SHORT-03A.
  *
- * Provenance: NEW IMPLEMENTATION (independently authored for SHORT-01).
- * Enforces 9:16 portrait 1080x1920 30fps Three.js short renderer scope and
- * rejects prohibited substitute engines or 16:9 longform modes.
+ * Provenance: NEW IMPLEMENTATION (independently authored for SHORT-01, extended for native 4K in SHORT-03A).
+ * Enforces strict 9:16 portrait aspect ratio & 30fps Three.js pipeline; supports allowlisted
+ * 1080x1920 (`standard`, default) and native 2160x3840 (`native_4k`) vertical presets.
  */
+
+export const OUTPUT_PRESETS = Object.freeze({
+  standard: Object.freeze({
+    id: 'standard',
+    label: '1080×1920 (Tiêu chuẩn 9:16)',
+    width: 1080,
+    height: 1920,
+    aspectRatio: '9:16',
+    fps: 30,
+  }),
+  native_4k: Object.freeze({
+    id: 'native_4k',
+    label: '2160×3840 (4K Dọc Gốc 9:16)',
+    width: 2160,
+    height: 3840,
+    aspectRatio: '9:16',
+    fps: 30,
+  }),
+});
 
 export const RENDER_CONTRACT = Object.freeze({
   width: 1080,
@@ -15,6 +34,7 @@ export const RENDER_CONTRACT = Object.freeze({
   pixelFormat: 'yuv420p',
   audioCodec: 'aac',
   engineFamily: 'threejs-2d-char-3d-world',
+  allowedPresets: Object.freeze(['standard', 'native_4k']),
   forbiddenEngines: Object.freeze(['skia', 'reachmora', 'remotion', 'moviepy', 'ai-video']),
 });
 
@@ -33,22 +53,57 @@ export class ContractValidationError extends Error {
   }
 }
 
+export function resolveOutputPreset(input) {
+  if (!input || input === 'standard') {
+    return OUTPUT_PRESETS.standard;
+  }
+  if (typeof input === 'string') {
+    const p = OUTPUT_PRESETS[input];
+    if (!p) {
+      throw new ContractValidationError(`Unsupported output preset: ${input}`, 'INVALID_OUTPUT_PRESET');
+    }
+    return p;
+  }
+  const presetKey = input.outputPreset || null;
+  if (presetKey) {
+    const preset = OUTPUT_PRESETS[presetKey];
+    if (!preset) {
+      throw new ContractValidationError(`Unsupported outputPreset: ${presetKey}`, 'INVALID_OUTPUT_PRESET');
+    }
+    if (
+      (input.width !== undefined && input.width !== preset.width) ||
+      (input.height !== undefined && input.height !== preset.height)
+    ) {
+      throw new ContractValidationError(
+        `Dimensions ${input.width}x${input.height} do not match preset "${presetKey}" (${preset.width}x${preset.height}).`,
+        'INVALID_DIMENSIONS'
+      );
+    }
+    return preset;
+  }
+
+  const w = input.width ?? RENDER_CONTRACT.width;
+  const h = input.height ?? RENDER_CONTRACT.height;
+  for (const preset of Object.values(OUTPUT_PRESETS)) {
+    if (w === preset.width && h === preset.height) {
+      return preset;
+    }
+  }
+  throw new ContractValidationError(
+    `Only 9:16 portrait 1080x1920 or native 2160x3840 is permitted; got ${w}x${h}.`,
+    'INVALID_DIMENSIONS'
+  );
+}
+
 export function validateProjectSpec(spec) {
   if (!spec || typeof spec !== 'object') {
     throw new ContractValidationError('Project specification must be a non-null object.');
   }
 
-  const width = spec.width ?? RENDER_CONTRACT.width;
-  const height = spec.height ?? RENDER_CONTRACT.height;
+  const preset = resolveOutputPreset(spec);
   const fps = spec.fps ?? RENDER_CONTRACT.fps;
   const engine = String(spec.engine || RENDER_CONTRACT.engineFamily).toLowerCase();
 
-  if (width !== RENDER_CONTRACT.width || height !== RENDER_CONTRACT.height) {
-    throw new ContractValidationError(
-      `Only 9:16 portrait 1080x1920 is permitted; got ${width}x${height}.`,
-      'INVALID_DIMENSIONS'
-    );
-  }
   if (fps !== RENDER_CONTRACT.fps) {
     throw new ContractValidationError(
       `Only 30 FPS is permitted; got ${fps}.`,
@@ -64,8 +119,9 @@ export function validateProjectSpec(spec) {
 
   return {
     projectId: validateProjectId(spec.projectId || 'default-short'),
-    width,
-    height,
+    outputPreset: preset.id,
+    width: preset.width,
+    height: preset.height,
     fps,
     engine,
     mode: spec.mode || 'original_engine',

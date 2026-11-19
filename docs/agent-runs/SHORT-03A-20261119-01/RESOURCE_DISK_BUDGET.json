@@ -1,0 +1,37 @@
+{
+  "host": {
+    "platform": "win32",
+    "arch": "x64",
+    "cpuLogicalThreads": 12,
+    "totalRamGb": 34.09,
+    "freeRamPre4kTailGb": 5.46,
+    "freeDiskInitialMb": 48175.68,
+    "freeDiskPreflightLowWatermarkBytes": 2147483648
+  },
+  "concurrencyPolicy": {
+    "standard1080pMaxWorkers": 2,
+    "native4kDefaultMaxWorkers": 2,
+    "native4kSpaciousHostCap": 3,
+    "verifyAllStage1Semaphore": 3,
+    "verifyAllStage2ChromiumSemaphore": 1
+  },
+  "measuredRenderTimings": {
+    "mine1080p600FramesWorkers2": {
+      "elapsedMs": 708965,
+      "effectiveMsPerFrame": 1181.6,
+      "mp4Bytes": 17100603
+    },
+    "mine4kTail90FramesWorkers3Parallel": {
+      "wallSeconds": 357.3,
+      "shard0AvgMsPerFrame": 11706.5,
+      "shard1AvgMsPerFrame": 8238.5,
+      "shard2AvgMsPerFrame": 11896.0,
+      "consoleErrors": 0,
+      "pageErrors": 0
+    },
+    "mine4kFinalMp4": {
+      "crf": 16,
+      "mp4Bytes": 130613803
+    }
+  }
+}

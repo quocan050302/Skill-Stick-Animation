@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>SHORT-03A How Mine Salting Worked 20s — Three.js 2D+3D Native 4K</title>
+  <style>
+    html, body { margin: 0; padding: 0; background: #000; overflow: hidden; }
+    canvas { display: block; width: 100vw; height: 100vh; }
+  </style>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "/three/build/three.module.js",
+        "/toonbase/": "/toonbase/",
+        "/visual/": "/visual/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <canvas id="c" width="1080" height="1920"></canvas>
+  <script>
+    window.addEventListener('error', (e) => {
+      window.err = String(e.message);
+      console.error('ERR', e.message);
+    });
+  </script>
+  <script type="module" src="./main_mine.js"></script>
+</body>
+</html>

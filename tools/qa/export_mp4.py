@@ -1,18 +1,18 @@
 """Safe FFmpeg 9:16 H.264/yuv420p/faststart MP4 exporter (NEW IMPLEMENTATION).
 
-Provenance: NEW IMPLEMENTATION (independently authored for SHORT-01).
-Uses argument arrays only (zero shell concatenation), atomic temp output + rename,
-and explicitly labels silent technical exports vs audio-muxed exports.
+Provenance: NEW IMPLEMENTATION (independently authored for SHORT-01, extended for native 4K verification in SHORT-03A).
+Uses argument arrays only (zero shell concatenation), atomic temp output + rename, verifies exact
+input frame dimensions without spatial upscaling, and explicitly labels silent vs audio-muxed exports.
 """
 
 from __future__ import annotations
 
 import os
-import signal
 import subprocess
 import tempfile
 from pathlib import Path
 from typing import Any
+from PIL import Image
 
 
 class ExportError(RuntimeError):
@@ -25,14 +25,30 @@ def export_frames_to_mp4(
     fps: int = 30,
     frame_pattern: str = "frame_%06d.png",
     audio_wav: Path | str | None = None,
-    timeout_seconds: int = 120,
+    timeout_seconds: int = 240,
+    expected_width: int | None = None,
+    expected_height: int | None = None,
+    crf: int = 18,
 ) -> dict[str, Any]:
-    """Encode image sequence into H.264 yuv420p 9:16 MP4 with +faststart."""
+    """Encode image sequence cleanly at native dimensions into H.264 yuv420p 9:16 MP4."""
     fdir = Path(frames_dir).resolve()
     dest = Path(out_mp4).resolve()
     if not fdir.is_dir():
         raise ExportError(f"Frames directory does not exist: {fdir}")
     dest.parent.mkdir(parents=True, exist_ok=True)
+
+    ext = Path(frame_pattern).suffix or ".png"
+    sample_frames = sorted(fdir.glob(f"frame_*{ext}"))
+    if not sample_frames:
+        raise ExportError(f"No matching frames (*{ext}) found in {fdir}")
+
+    # Verify native input dimensions on disk so FFmpeg never upscales or mixes resolutions
+    with Image.open(sample_frames[0]) as im0:
+        in_w, in_h = im0.size
+    if expected_width is not None and in_w != expected_width:
+        raise ExportError(f"Input frame width mismatch: expected {expected_width}, got {in_w} (upscaling is forbidden).")
+    if expected_height is not None and in_h != expected_height:
+        raise ExportError(f"Input frame height mismatch: expected {expected_height}, got {in_h} (upscaling is forbidden).")
 
     fd, tmp_name = tempfile.mkstemp(prefix=f".{dest.stem}.", suffix=".mp4", dir=str(dest.parent))
     os.close(fd)
@@ -66,7 +82,7 @@ def export_frames_to_mp4(
             "-preset",
             "medium",
             "-crf",
-            "18",
+            str(int(crf)),
             "-pix_fmt",
             "yuv420p",
             "-color_range",
@@ -106,6 +122,8 @@ def export_frames_to_mp4(
     os.replace(tmp_path, dest)
     return {
         "out_mp4": str(dest),
+        "input_width": in_w,
+        "input_height": in_h,
         "bytes": dest.stat().st_size,
         "mode_label": mode_label,
         "ffmpeg_cmd": cmd,

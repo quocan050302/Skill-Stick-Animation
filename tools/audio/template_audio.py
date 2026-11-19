@@ -199,6 +199,88 @@ def _synth_generic_stems(n_samples: int) -> tuple[np.ndarray, np.ndarray]:
     return music, sfx
 
 
+def _synth_mine_salting_stems(n_samples: int) -> tuple[np.ndarray, np.ndarray]:
+    """Synthesize moody frontier documentary acoustic bed + period mine SFX stems."""
+    rng = np.random.default_rng(1872)
+    music = np.zeros(n_samples, dtype=np.float64)
+    sfx = np.zeros(n_samples, dtype=np.float64)
+    dur_s = n_samples / SR
+
+    # Frontier D-minor -> Bb -> C -> Dm documentary acoustic pluck progression (96 BPM)
+    step_dt = 0.3125
+    progression = [
+        [146.83, 220.00, 293.66, 349.23],  # Dm
+        [146.83, 220.00, 293.66, 329.63],  # Dsus2
+        [116.54, 174.61, 233.08, 293.66],  # Bb
+        [130.81, 196.00, 261.63, 329.63],  # C
+    ]
+    total_steps = int(dur_s / step_dt)
+    for step in range(total_steps):
+        t0 = step * step_dt
+        chord = progression[(step // 4) % len(progression)]
+        f = chord[step % len(chord)]
+        n = int(0.45 * SR)
+        t = np.arange(n) / SR
+        pluck = (
+            np.sin(2 * np.pi * f * t)
+            + 0.38 * np.sin(4 * np.pi * f * t)
+            + 0.14 * np.sin(6 * np.pi * f * t)
+        ) * np.minimum(1.0, t / 0.008) * np.exp(-t * 5.8)
+        _place(music, pluck, t0, 0.16)
+        if step % 4 == 0:
+            bf = chord[0] * 0.5
+            nb = int(0.85 * SR)
+            tb = np.arange(nb) / SR
+            bass = (np.sin(2 * np.pi * bf * tb) + 0.25 * np.sin(4 * np.pi * bf * tb)) * np.minimum(1.0, tb / 0.02) * np.exp(-tb * 3.0)
+            _place(music, bass, t0, 0.22)
+
+    # Beat 1 (hook ~0.45s): bright metallic glint chime + pickaxe clink on stone
+    for dt, f0 in [(0.45, 2217.46), (0.62, 2793.83), (1.45, 1680.0)]:
+        n = int(0.28 * SR)
+        t = np.arange(n) / SR
+        clink = (np.sin(2 * np.pi * f0 * t) + 0.45 * np.sin(2 * np.pi * (f0 * 1.48) * t)) * np.exp(-t * 14.0)
+        _place(sfx, clink, dt, 0.34)
+
+    # Beat 2 (secret ~3.45s): whispered brush swish + gold dust shimmer
+    n_sw = int(0.65 * SR)
+    ts = np.arange(n_sw) / SR
+    brush = rng.standard_normal(n_sw) * (np.sin(np.pi * ts / 0.65) ** 1.5)
+    X = np.fft.rfft(brush)
+    freqs = np.fft.rfftfreq(n_sw, 1.0 / SR)
+    X *= np.exp(-((freqs - 2400.0) / 1400.0) ** 2)
+    _place(sfx, np.fft.irfft(X, n_sw), 3.65, 0.32)
+
+    # Beat 3 (test ~7.10s): three discrete solid gold nuggets dropping into leather pouch
+    for idx, f_nug in enumerate([1960.0, 2240.0, 1780.0]):
+        n = int(0.16 * SR)
+        t = np.arange(n) / SR
+        clink = (np.sin(2 * np.pi * f_nug * t) + 0.35 * np.sin(2 * np.pi * (f_nug * 1.61) * t)) * np.exp(-t * 18.0)
+        _place(sfx, clink, 7.25 + idx * 0.28, 0.38)
+
+    # Beat 4 (belief ~10.35s): warm celebratory brass balance ding (major triad)
+    for idx, freq in enumerate([587.33, 739.99, 880.00, 1174.66]):
+        n = int(0.45 * SR)
+        t = np.arange(n) / SR
+        bell = (np.sin(2 * np.pi * freq * t) + 0.2 * np.sin(4 * np.pi * freq * t)) * np.exp(-t * 6.5)
+        _place(sfx, bell, 10.65 + idx * 0.09, 0.28)
+
+    # Beat 5 (check ~13.45s): heavy chisel tap + hollow barren rock thud
+    for dt in (13.70, 14.35):
+        n = int(0.24 * SR)
+        t = np.arange(n) / SR
+        thud = np.sin(2 * np.pi * (145.0 * np.exp(-t * 14.0) + 65.0) * t) * np.exp(-t * 15.0)
+        snap = rng.standard_normal(n) * np.exp(-t * 36.0) * 0.35
+        _place(sfx, thud + snap, dt, 0.42)
+
+    # Beat 6 (payoff ~16.85s): dramatic low toll + iron scale clatter reveal
+    n_tl = int(1.2 * SR)
+    tt = np.arange(n_tl) / SR
+    toll = (np.sin(2 * np.pi * 146.83 * tt) + 0.5 * np.sin(2 * np.pi * 220.0 * tt)) * np.minimum(1.0, tt / 0.015) * np.exp(-tt * 2.4)
+    _place(sfx, toll, 17.05, 0.36)
+
+    return music, sfx
+
+
 def generate_template_stems(
     template_id: str,
     frames: int,
@@ -211,6 +293,8 @@ def generate_template_stems(
         music, sfx = _synth_zombie_stems(n_samples)
     elif template_id == "plaza-courier-10s":
         music, sfx = _synth_plaza_stems(n_samples)
+    elif template_id == "mine-salting-20s":
+        music, sfx = _synth_mine_salting_stems(n_samples)
     else:
         music, sfx = _synth_generic_stems(n_samples)
 

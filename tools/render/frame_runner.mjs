@@ -139,7 +139,28 @@ export function canonicalFrameName(frameIndex, ext = 'png') {
   return `frame_${String(frameIndex).padStart(6, '0')}.${ext}`;
 }
 
-export function validateExistingResumeFrame(filePath, expectedSha256, expectedWidth = 1080, expectedHeight = 1920) {
+export function validateExistingResumeFrame(
+  filePath,
+  expectedSha256,
+  expectedWidth = 1080,
+  expectedHeight = 1920,
+  manifestMeta = null,
+  expectedProfile = null
+) {
+  if (manifestMeta && (manifestMeta.width !== expectedWidth || manifestMeta.height !== expectedHeight)) {
+    return {
+      valid: false,
+      reason: 'manifest_dimension_mismatch',
+      manifestWidth: manifestMeta.width,
+      manifestHeight: manifestMeta.height,
+    };
+  }
+  if (expectedProfile?.outputPreset && manifestMeta?.outputPreset && manifestMeta.outputPreset !== expectedProfile.outputPreset) {
+    return { valid: false, reason: 'manifest_preset_mismatch' };
+  }
+  if (expectedProfile?.visualFoundation && manifestMeta?.visualFoundation && manifestMeta.visualFoundation !== expectedProfile.visualFoundation) {
+    return { valid: false, reason: 'manifest_visual_mode_mismatch' };
+  }
   if (!fs.existsSync(filePath)) {
     return { valid: false, reason: 'missing' };
   }

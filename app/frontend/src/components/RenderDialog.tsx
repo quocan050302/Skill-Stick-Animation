@@ -7,7 +7,13 @@ interface RenderDialogProps {
   submitting: boolean;
   error: string | null;
   onClose: () => void;
-  onStartRender: (options: { mode: 'full' | 'bounded'; startFrame?: number; endFrame?: number; workers: number }) => Promise<void>;
+  onStartRender: (options: {
+    mode: 'full' | 'bounded';
+    outputPreset: 'standard' | 'native_4k';
+    startFrame?: number;
+    endFrame?: number;
+    workers: number;
+  }) => Promise<void>;
 }
 
 export function RenderDialog({
@@ -19,6 +25,7 @@ export function RenderDialog({
   onStartRender,
 }: RenderDialogProps) {
   const [mode, setMode] = useState<'full' | 'bounded'>('full');
+  const [outputPreset, setOutputPreset] = useState<'standard' | 'native_4k'>('standard');
   const [workers, setWorkers] = useState<number>(2);
 
   useEffect(() => {
@@ -34,14 +41,16 @@ export function RenderDialog({
 
   const hasConflict = project.timing?.syncMode === 'conflict';
   const boundedEnd = Math.min(23, Math.max(0, project.durationFrames - 1));
+  const outResLabel = outputPreset === 'native_4k' ? '2160×3840 (4K Dọc Gốc)' : '1080×1920';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (hasConflict) return;
+    const boundedWorkers = outputPreset === 'native_4k' ? 1 : mode === 'full' ? workers : 1;
     await onStartRender(
       mode === 'full'
-        ? { mode: 'full', workers }
-        : { mode: 'bounded', startFrame: 0, endFrame: boundedEnd, workers: 1 }
+        ? { mode: 'full', outputPreset, workers: boundedWorkers }
+        : { mode: 'bounded', outputPreset, startFrame: 0, endFrame: boundedEnd, workers: boundedWorkers }
     );
   };
 
@@ -76,13 +85,34 @@ export function RenderDialog({
         )}
 
         <div className="qa-item">
-          <strong style={{ color: 'var(--text)' }}>Thông số đầu ra cố định</strong>
+          <strong style={{ color: 'var(--text)' }}>Thông số đầu ra</strong>
           <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
-            1080×1920 (9:16 dọc) · 30 fps · H.264 TV-range yuv420p (+faststart) · AAC 48kHz
+            {outResLabel} (9:16 dọc) · 30 fps · H.264 TV-range yuv420p (+faststart) · AAC 48kHz
           </span>
           <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
             Âm thanh: {project.voiceover ? 'Lời thoại + Nhạc/SFX (-6.0 dB linear gated-RMS)' : 'Nhạc & SFX nền đồng bộ (không lời thoại)'}
           </span>
+        </div>
+
+        <div className="field">
+          <label className="field-label" htmlFor="render-preset-select">
+            Độ phân giải xuất
+          </label>
+          <select
+            id="render-preset-select"
+            className="select"
+            value={outputPreset}
+            onChange={(e) => setOutputPreset(e.target.value as 'standard' | 'native_4k')}
+            data-testid="render-preset-select"
+          >
+            <option value="standard">1080p dọc (1080×1920 — Nhanh, khuyến nghị để thử nghiệm)</option>
+            <option value="native_4k">4K dọc gốc (2160×3840 — Dựng WebGL gốc, tốn RAM & dung lượng đĩa hơn)</option>
+          </select>
+          {outputPreset === 'native_4k' && (
+            <span style={{ fontSize: '12.5px', color: 'var(--warning)' }}>
+              Lưu ý: Kết xuất 4K dọc thực tế (2160×3840) dùng 1 luồng Chromium an toàn, cần tối thiểu ~2.5 GB trống và mất nhiều thời gian hơn.
+            </span>
+          )}
         </div>
 
         <div className="field">
@@ -118,7 +148,7 @@ export function RenderDialog({
           </div>
         </div>
 
-        {mode === 'full' && (
+        {mode === 'full' && outputPreset === 'standard' && (
           <div className="field">
             <label className="field-label" htmlFor="render-workers-select">
               Số luồng Chromium song song

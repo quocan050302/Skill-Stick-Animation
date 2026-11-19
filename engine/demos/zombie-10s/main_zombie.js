@@ -10,10 +10,15 @@ import * as THREE from 'three';
 import * as P from './paint_store.js';
 import * as Cast from './cast_zombie.js';
 import { TOTAL, shotAt, camAt, dofAt, lightFor, worldAt, actorsAt, fxAt } from './story_zombie.js';
+import * as Visual from '/visual/index.js';
 
-const W = 1080;
-const H = 1920;
+const outCfg = (typeof globalThis !== 'undefined' && globalThis.__RENDER_OUTPUT_CONFIG__) || {};
+const W = outCfg.width || 1080;
+const H = outCfg.height || 1920;
+const SCALE = H / 1920;
 const canvas = document.getElementById('c');
+canvas.width = W;
+canvas.height = H;
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, preserveDrawingBuffer: true });
 renderer.setPixelRatio(1);
 renderer.setSize(W, H, false);
@@ -245,7 +250,9 @@ class Card {
     this.t = new THREE.CanvasTexture(this.c);
     this.t.colorSpace = THREE.SRGBColorSpace;
     this.t.anisotropy = 4;
-    this.mat = new THREE.MeshBasicMaterial({ map: this.t, transparent: true, alphaTest: 0.02, side: THREE.DoubleSide, fog: true });
+    this.basicMat = new THREE.MeshBasicMaterial({ map: this.t, transparent: true, alphaTest: 0.02, side: THREE.DoubleSide, fog: true });
+    this.litMat = Visual.createLitCardMaterial(this.t, { pxScale: SCALE }, { charTint: '#fff5ec', charShade: 0.85, rimStrength: 0.14 });
+    this.mat = this.basicMat;
     this.mesh = new THREE.Mesh(cardGeo, this.mat);
     this.mesh.userData.nd = cardNd(this.t);
     this.mesh.castShadow = true;
@@ -341,6 +348,15 @@ const dofScene = fs(new THREE.ShaderMaterial({
 }));
 dofScene.children[0].material.toneMapped = false;
 
+const enhInkPass = Visual.createInkGradePass(W, H, { colorTexture: rtColor.texture, ndTexture: rtNd.texture, grainAmount: 0.014 });
+const enhDofPass = Visual.createDofPass(W, H, { srcTexture: rtInk.texture, ndTexture: rtNd.texture });
+const isEnhancedMode = () => globalThis.__STUDIO_OVERRIDES__?.scene?.visualFoundation === 'enhanced';
+const ENH_PROFILE_MAP = {
+  storeBright: 'warmInterior',
+  dramaticBlue: 'coolDramatic',
+  storePayoff: 'warmInterior',
+};
+
 const tmpV = new THREE.Vector3();
 function applyLight(L, W_) {
   hemi.color.set(L.sky);
@@ -423,7 +439,7 @@ function updateWorld(W_) {
   }
 }
 
-function drawActors(list) {
+function drawActors(list, L, enh) {
   cards.forEach((c) => { c.mesh.visible = c.blob.visible = false; });
   list.forEach((a, i) => {
     const c = getCard(i);
@@ -433,13 +449,25 @@ function drawActors(list) {
     const s = a.s || 1;
     c.mesh.scale.set(s, s, s);
     c.mesh.rotation.set(0, Math.atan2(camera.position.x - a.x, camera.position.z - a.z), a.roll || 0);
-    c.mat.color.set(a.tint || '#ffffff');
     c.mesh.castShadow = a.shadow !== false;
     c.mesh.renderOrder = a.order || 2;
+    if (enh && a.order !== 6) {
+      c.mesh.material = c.litMat;
+      c.mesh.receiveShadow = true;
+      Visual.updateCardLight(c.litMat, L, { pxScale: SCALE });
+    } else {
+      c.mesh.material = c.basicMat;
+      c.mesh.receiveShadow = false;
+      c.basicMat.color.set(a.tint || '#ffffff');
+    }
     if (a.blob !== false) {
       c.blob.visible = true;
-      c.blob.position.set(a.x, 0.02, a.z);
-      c.blob.scale.set(0.95 * s, 0.6 * s, 1);
+      if (enh) {
+        Visual.makeContactShadow(c.blob, a, L);
+      } else {
+        c.blob.position.set(a.x, 0.02, a.z);
+        c.blob.scale.set(0.95 * s, 0.6 * s, 1);
+      }
     }
   });
 }
@@ -460,8 +488,9 @@ const swapForNd = (on) => {
 
 window.renderFrame = (f) => {
   syncSceneTextOverrides();
+  const enh = isEnhancedMode();
   const S = shotAt(f);
-  const L = lightFor(S);
+  const L = enh ? Visual.getLookProfile({ ...Visual.LOOK_PROFILES[ENH_PROFILE_MAP[S.light] || 'warmInterior'], ...lightFor(S) }) : lightFor(S);
   const C = camAt(f);
   const W_ = worldAt(f);
 
@@ -486,7 +515,7 @@ window.renderFrame = (f) => {
   sc.left = -ext; sc.right = ext; sc.top = ext; sc.bottom = -ext; sc.near = 1; sc.far = 60;
   sc.updateProjectionMatrix();
 
-  drawActors([...actorsAt(f, Cast), ...fxAt(f, Cast)]);
+  drawActors([...actorsAt(f, Cast), ...fxAt(f, Cast)], L, enh);
 
   // Pass A: color
   renderer.setRenderTarget(rtColor);
@@ -511,19 +540,54 @@ window.renderFrame = (f) => {
   renderer.shadowMap.autoUpdate = true;
 
   // Pass C: ink + grade
-  inkU.flash.value = C.flash || 0;
-  renderer.setRenderTarget(rtInk);
-  renderer.render(inkScene, fsCam);
+  if (enh || SCALE !== 1) {
+    Visual.updateInkGradeUniforms(enhInkPass, {
+      sat: L.sat,
+      lift: L.lift || '#000000',
+      gain: L.gain || '#ffffff',
+      vig: L.vig ?? 0.18,
+      flash: C.flash || 0,
+      grainSeed: f,
+      grainAmount: enh ? 0.015 : 0.0,
+    });
+    renderer.setRenderTarget(rtInk);
+    renderer.render(enhInkPass.scene, fsCam);
+  } else {
+    inkU.flash.value = C.flash || 0;
+    renderer.setRenderTarget(rtInk);
+    renderer.render(inkScene, fsCam);
+  }
 
   // Pass D: 48-tap DOF -> screen
   const D = dofAt(f);
-  dofU.focus.value = D.focus;
-  dofU.cinf.value = D.cinf;
-  dofU.near.value = D.near ?? 1;
-  renderer.setRenderTarget(null);
-  renderer.render(dofScene, fsCam);
+  if (enh || SCALE !== 1) {
+    Visual.updateDofUniforms(enhDofPass, {
+      focus: D.focus,
+      cinf: D.cinf,
+      near: D.near ?? 1,
+    });
+    renderer.setRenderTarget(null);
+    renderer.render(enhDofPass.scene, fsCam);
+  } else {
+    dofU.focus.value = D.focus;
+    dofU.cinf.value = D.cinf;
+    dofU.near.value = D.near ?? 1;
+    renderer.setRenderTarget(null);
+    renderer.render(dofScene, fsCam);
+  }
   return true;
 };
+
+window.getRenderBufferMetrics = () => ({
+  canvasW: canvas.width,
+  canvasH: canvas.height,
+  rtColorW: rtColor.width,
+  rtColorH: rtColor.height,
+  rtNdW: rtNd.width,
+  rtNdH: rtNd.height,
+  scaleFactor: SCALE,
+  visualFoundation: isEnhancedMode() ? 'enhanced' : 'baseline',
+});
 
 let appliedSignTitle = '24/7 SNACKS';
 let appliedAisleLabel = 'CRUNCH AISLE';

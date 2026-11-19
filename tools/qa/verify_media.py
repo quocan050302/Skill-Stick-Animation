@@ -195,6 +195,7 @@ def verify_mp4_with_ffprobe(
     checks = {
         "h264": codec_name == "h264",
         "dimensions_1080x1920": width == expected_width and height == expected_height,
+        "dimensions_expected": width == expected_width and height == expected_height,
         "fps_30": abs(fps - expected_fps) <= 0.1,
         "pix_fmt_yuv420p": pix_fmt == "yuv420p",
         "faststart_moov_first": faststart_ok,
@@ -218,4 +219,81 @@ def verify_mp4_with_ffprobe(
         "decode_stderr": decode.stderr.strip(),
         "checks": checks,
         "ok": all(checks.values()),
+    }
+
+
+def check_native_4k_detail(
+    image_path: Path | str,
+    min_hf_p999: float = 14.0,
+    min_fft_hi_ratio: float = 0.011,
+) -> dict[str, Any]:
+    """Detect whether a 2160x3840 image carries genuine sub-1080p high-frequency detail vs upscaling."""
+    p = Path(image_path)
+    if not p.exists():
+        raise FileNotFoundError(f"Frame not found: {p}")
+
+    with Image.open(p) as im:
+        im.load()
+        w, h = im.size
+        if w != 2160 or h != 3840:
+            return {
+                "path": str(p),
+                "width": w,
+                "height": h,
+                "is_4k_dims": False,
+                "hf_residual_mean": 0.0,
+                "hf_residual_p99": 0.0,
+                "hf_residual_p995": 0.0,
+                "hf_residual_p999": 0.0,
+                "fft_hi_ratio": 0.0,
+                "is_native_detail_ok": False,
+                "reason": f"Expected 2160x3840, got {w}x{h}",
+            }
+        luma = im.convert("L")
+        down_1080 = luma.resize((1080, 1920), Image.Resampling.BICUBIC)
+        roundtrip = down_1080.resize((2160, 3840), Image.Resampling.BICUBIC)
+        orig_arr = np.asarray(luma, dtype=np.float32)
+        rt_arr = np.asarray(roundtrip, dtype=np.float32)
+
+    diff = np.abs(orig_arr - rt_arr)
+    hf_mean = float(np.mean(diff))
+    hf_p99 = float(np.percentile(diff, 99.0))
+    hf_p995 = float(np.percentile(diff, 99.5))
+    hf_p999 = float(np.percentile(diff, 99.9))
+
+    # Pick the sharpest-edge 512x512 tile across the frame so smooth backgrounds don't dilute 2D FFT
+    best_grad = -1.0
+    best_crop = orig_arr[h // 2 - 256 : h // 2 + 256, w // 2 - 256 : w // 2 + 256]
+    for y0 in range(0, h - 512, 256):
+        for x0 in range(0, w - 512, 256):
+            tile = orig_arr[y0 : y0 + 512, x0 : x0 + 512]
+            g = float(np.percentile(np.abs(tile[:, 1:] - tile[:, :-1]), 99.0))
+            if g > best_grad:
+                best_grad = g
+                best_crop = tile
+
+    crop = best_crop / 255.0
+    crop = crop - float(np.mean(crop))
+    fft_mag2 = np.abs(np.fft.fftshift(np.fft.fft2(crop))) ** 2
+    yy, xx = np.ogrid[:512, :512]
+    norm_r = np.maximum(np.abs(yy - 256), np.abs(xx - 256)) / 256.0
+    low_band = float(np.sum(fft_mag2[(norm_r > 0.05) & (norm_r <= 0.45)]))
+    high_band = float(np.sum(fft_mag2[(norm_r > 0.55) & (norm_r <= 0.95)]))
+    fft_hi_ratio = high_band / max(low_band, 1e-9)
+
+    is_ok = (fft_hi_ratio >= min_fft_hi_ratio) and (hf_p999 >= min_hf_p999)
+
+    return {
+        "path": str(p),
+        "width": 2160,
+        "height": 3840,
+        "is_4k_dims": True,
+        "hf_residual_mean": round(hf_mean, 4),
+        "hf_residual_p99": round(hf_p99, 4),
+        "hf_residual_p995": round(hf_p995, 4),
+        "hf_residual_p999": round(hf_p999, 4),
+        "fft_hi_ratio": round(fft_hi_ratio, 6),
+        "min_hf_p999_threshold": min_hf_p999,
+        "min_fft_hi_ratio_threshold": min_fft_hi_ratio,
+        "is_native_detail_ok": bool(is_ok),
     }
