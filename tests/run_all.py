@@ -91,6 +91,12 @@ async def run_dag(max_parallel: int) -> dict[str, Any]:
             "stage": 1,
             "cmd": ["node", "--test", "tests/unit/test_contract_and_adapter.mjs"],
         },
+        {
+            "id": "unit_motion_story_modules",
+            "category": "unit",
+            "stage": 1,
+            "cmd": ["node", "--test", "tests/unit/test_original_kit_modules.mjs"],
+        },
     ]
 
     stage2_jobs = [
@@ -99,6 +105,12 @@ async def run_dag(max_parallel: int) -> dict[str, Any]:
             "category": "preflight",
             "stage": 2,
             "cmd": ["node", "tools/setup/safe_setup.mjs"],
+        },
+        {
+            "id": "regression_original_engine_parity",
+            "category": "regression+backtest",
+            "stage": 2,
+            "cmd": [py, "-m", "unittest", "-v", "tests/regression/test_original_engine_parity.py"],
         },
         {
             "id": "integration_webgl_and_ffmpeg",
@@ -133,11 +145,13 @@ async def run_dag(max_parallel: int) -> dict[str, Any]:
         "failed_suites": failed,
         "overall_status": "PASS" if failed == 0 else "FAIL",
         "elapsed_total_ms": total_ms,
-        "blocked_suites_missing_kit": [
-            "regression_original_soldier_baseline (BLOCKED: missing cartoon-short-kit.zip)",
-            "backtest_soldier_stills_comparison (BLOCKED: missing example/soldier/stills.jpg)",
-            "e2e_new_zombie_10s_on_original_engine (BLOCKED: missing original engine/web/*)",
-        ],
+        "blocked_suites_missing_kit": (
+            []
+            if (ROOT / "vendor" / "cartoon-short-kit").exists()
+            else [
+                "regression_original_soldier_baseline (BLOCKED: local vendor/cartoon-short-kit absent)",
+            ]
+        ),
         "suites": all_results,
     }
 

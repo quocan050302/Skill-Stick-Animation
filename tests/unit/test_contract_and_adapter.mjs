@@ -105,15 +105,22 @@ test('loopback server enforces 127.0.0.1 and rejects path traversal', async () =
 });
 
 test('renderer_adapter rejects original_engine with INPUT_BLOCKED when kit files absent', async () => {
-  const adapter = createRendererAdapter(ROOT);
-  await assert.rejects(
-    () => adapter.initializeRenderer({ projectId: 'soldier-baseline', mode: 'original_engine' }),
-    (err) =>
-      err instanceof EngineInputBlockedError &&
-      err.code === 'INPUT_BLOCKED' &&
-      err.missingFiles.length === REQUIRED_ORIGINAL_ENGINE_FILES.length
-  );
-  await adapter.disposeRenderer();
+  const missingKitRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'ssa-nokit-'));
+  fs.mkdirSync(path.join(missingKitRoot, 'node_modules', 'three', 'build'), { recursive: true });
+  fs.writeFileSync(path.join(missingKitRoot, 'node_modules', 'three', 'build', 'three.module.js'), '// stub\n');
+  const adapter = createRendererAdapter(missingKitRoot);
+  try {
+    await assert.rejects(
+      () => adapter.initializeRenderer({ projectId: 'soldier-baseline', mode: 'original_engine' }),
+      (err) =>
+        err instanceof EngineInputBlockedError &&
+        err.code === 'INPUT_BLOCKED' &&
+        err.missingFiles.length === REQUIRED_ORIGINAL_ENGINE_FILES.length
+    );
+  } finally {
+    await adapter.disposeRenderer();
+    fs.rmSync(missingKitRoot, { recursive: true, force: true });
+  }
 });
 
 test('renderer_adapter detects missing Three.js dependency cleanly', async () => {
@@ -166,7 +173,10 @@ test('disk preflight, resume validator, and finite retry enforce safety boundari
 });
 
 test('local API server enforces loopback, contract validation, and honest INPUT_BLOCKED status', async () => {
-  const api = await startApiServer({ port: 0, projectRoot: ROOT });
+  const noKitRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'ssa-api-nokit-'));
+  fs.mkdirSync(path.join(noKitRoot, 'node_modules', 'three', 'build'), { recursive: true });
+  fs.writeFileSync(path.join(noKitRoot, 'node_modules', 'three', 'build', 'three.module.js'), '// stub\n');
+  const api = await startApiServer({ port: 0, projectRoot: noKitRoot });
   try {
     assert.equal(api.host, '127.0.0.1');
 
@@ -181,7 +191,7 @@ test('local API server enforces loopback, contract validation, and honest INPUT_
     const cBody = await contractRes.json();
     assert.equal(cBody.contract.aspectRatio, RENDER_CONTRACT.aspectRatio);
 
-    // Original engine request must return 409 INPUT_BLOCKED (never fake render)
+    // Original engine request must return 409 INPUT_BLOCKED when kit missing (never fake render)
     const origRes = await fetch(`${api.baseUrl}/api/render/frame`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -200,5 +210,6 @@ test('local API server enforces loopback, contract validation, and honest INPUT_
     assert.equal(badRes.status, 400);
   } finally {
     await api.close();
+    fs.rmSync(noKitRoot, { recursive: true, force: true });
   }
 });

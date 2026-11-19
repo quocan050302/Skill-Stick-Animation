@@ -9,9 +9,12 @@
   },
   "scripts": {
     "setup:verify": "node tools/setup/safe_setup.mjs",
+    "setup:restore": "node tools/setup/install_engine.mjs",
     "audit:kit": "python tools/setup/audit_kit.py",
     "smoke:webgl": "node tools/render/webgl_smoke.mjs",
-    "test:node": "node --test tests/unit/test_contract_and_adapter.mjs",
+    "render:original": "node tools/render/render_original.mjs",
+    "render:parallel": "node tools/render/render_parallel.mjs",
+    "test:node": "node --test tests/unit/test_contract_and_adapter.mjs tests/unit/test_original_kit_modules.mjs",
     "test:all": "python tests/run_all.py",
     "serve:api": "node app/server/api_server.mjs"
   },

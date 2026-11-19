@@ -1,74 +1,72 @@
 # Skill-Stick-Animation (`SHORT-01`)
 
-Independent 2D-character + 3D-world, **9:16 portrait (1080×1920, 30 FPS)** short video rendering project built around a Three.js + Playwright + FFmpeg pipeline.
+Independent 2D-character + 3D-world, **9:16 portrait (1080×1920, 30 FPS)** short video rendering project preserving the original Three.js + Playwright + FFmpeg pipeline architecture.
 
-> [!WARNING]
-> **Current Status: PARTIAL COMPLETION (`INPUT_BLOCKED` on Original Kit Source).**
-> Local tooling, pinned `three@0.160.0` + `playwright@1.65.1`, real Chromium WebGL2 1080×1920 rendering smoke (G07), forensic ZIP ingestion/preservation tooling, disk/cancellation/resume guardrails (G17), SKILL-spec linear `-6.02 dB` gated-RMS audio mixer (`tools/audio/mix.py`), FFmpeg/FFprobe media verification, and bounded async tests (G16) are implemented and verified.
-> Original kit baseline rendering (`G03–G05`, `G08–G15`) remains **BLOCKED** until `cartoon-short-kit.zip` and `Pasted markdown.md` are supplied locally under `_inputs/`.
+> [!IMPORTANT]
+> **Publication / Licensing Status (G05):** This public repository contains ONLY independently authored scaffolding, safe installers, adapters, QA verifiers, tests, documentation, preserved MIT dependency notices (`three@0.160.0`, `mromidev/claude-animated-shorts`), and our freshly authored 10-second test fixture (`engine/demos/zombie-10s/`).
+> Original third-party `cartoon-short-kit.zip` files have no package-level `LICENSE` and are preserved **locally only** under `.gitignored` `vendor/cartoon-short-kit/` and `engine/web/`.
 
 ---
 
 ## Repository Layout
 
-- `vendor/` — Third-party license governance & `source-manifest.json` (`vendor/cartoon-short-kit/` is `.gitignored` until G05 licensing is resolved)
-- `engine/adapters/` — Target Engine Adapter (`renderer_adapter.mjs`) & WebGL2 technical smoke scene (`smoke_webgl_scene.html`)
-- `tools/setup/` — Forensic ZIP auditor (`audit_kit.py`), safe path/disk guards (`safe_path.py`), cross-platform setup verifier (`safe_setup.mjs`)
-- `tools/render/` — Loopback `127.0.0.1` server (`server.mjs`), atomic/resume frame runner (`frame_runner.mjs`), G07 WebGL2 smoke CLI (`webgl_smoke.mjs`)
-- `tools/timing/` — Duration-to-frame & segment timing validators (`timing_contract.py`)
-- `tools/audio/` — **NEW** SKILL-spec linear `-6.02 dB` gated-RMS mixer without dynamic ducking (`mix.py`)
-- `tools/qa/` — Pillow image decoder QA + FFprobe/FFmpeg validator (`verify_media.py`) & safe MP4 exporter (`export_mp4.py`)
+- `vendor/` — Third-party MIT notices (`vendor/licenses/`), pinned dependency lock (`upstream-deps-lock.json`), and SHA-256 manifest (`source-manifest.json`)
+- `engine/adapters/` — 6-method Engine Adapter (`renderer_adapter.mjs`) & WebGL2 smoke scene (`smoke_webgl_scene.html`)
+- `engine/demos/zombie-10s/` — Freshly authored 10-second (300-frame, 9:16) convenience-store zombie proof (test fixture only, not niche-locked)
+- `tools/setup/` — Forensic ZIP auditor (`audit_kit.py`), safe path/disk guards (`safe_path.py`), cross-platform engine restorer (`install_engine.mjs`), environment verifier (`safe_setup.mjs`)
+- `tools/render/` — Loopback `127.0.0.1` server (`server.mjs`), atomic/resume utilities (`frame_runner.mjs`), single & bounded-parallel frame capture CLIs (`render_original.mjs`, `render_parallel.mjs`), G07 smoke (`webgl_smoke.mjs`)
+- `tools/timing/` — Timing & frame-count validators (`timing_contract.py`)
+- `tools/audio/` — **NEW** SKILL-spec linear `-6.02 dB` gated-RMS mixer (`mix.py`), Soldier Config A vs B auditor (`soldier_audio_audit.py`), zombie demo synth (`zombie_audio.py`)
+- `tools/qa/` — Pillow frame/motion QA + FFprobe/FFmpeg validator (`verify_media.py`), strict TV-range `yuv420p` MP4 exporter (`export_mp4.py`), contact-sheet builder (`contact_sheet.py`)
 - `app/shared/` & `app/server/` — Strict 9:16 contract (`contract.mjs`) & loopback verification API (`api_server.mjs`)
-- `tests/` — Unit, integration, negative tests & bounded async DAG runner (`run_all.py`)
-- `docs/` — Audit, dependencies, architecture, parity, SHORT-02 contract, QA report, and immutable per-run folders (`docs/agent-runs/`)
+- `tests/` — Unit, integration, regression/backtest, negative tests & bounded async DAG runner (`run_all.py`)
+- `docs/` — Forensic audit, dependencies, architecture, parity, SHORT-02 contract, QA reports, and immutable per-run logs (`docs/agent-runs/`)
 
 ---
 
 ## Reproducible Commands
 
-Only verified, working commands are documented below.
+### 1. Install Pinned Dependencies & Verify Local Environment
 
-### 1. Install Pinned Dependencies
+**Windows (PowerShell) & bash:**
+```bash
+npm ci
+npm run setup:verify
+```
+
+### 2. Audit, Preserve, and Restore Original Kit Locally
+
+Place `cartoon-short-kit.zip` and `SKILL.md` locally, then run:
 
 **Windows (PowerShell):**
 ```powershell
-npm ci
-node tools/setup/safe_setup.mjs
+python tools/setup/audit_kit.py --zip "<path>\cartoon-short-kit.zip" --skill-md "<path>\SKILL.md" --preserve --write-manifest
+npm run setup:restore
+npm run setup:verify
 ```
 
 **macOS / Linux (bash):**
 ```bash
-npm ci
-node tools/setup/safe_setup.mjs
+python3 tools/setup/audit_kit.py --zip "<path>/cartoon-short-kit.zip" --skill-md "<path>/SKILL.md" --preserve --write-manifest
+npm run setup:restore
+npm run setup:verify
 ```
 
-### 2. Audit & Preserve Original Kit Archive (once supplied locally)
+### 3. Render Original Soldier Reference Stills & Contact Sheet
 
-Place `cartoon-short-kit.zip` and `Pasted markdown.md` in `_inputs/`, then run:
-
-**Windows (PowerShell) & bash:**
 ```bash
-python tools/setup/audit_kit.py --preserve --write-manifest
-```
-*(Returns exit code `2` with `status: "INPUT_BLOCKED"` when inputs are absent.)*
-
-### 3. Run Real Chromium WebGL2 1080×1920 Technical Smoke (G07)
-
-**Windows (PowerShell) & bash:**
-```bash
-npm run smoke:webgl
+node tools/render/render_original.mjs --project-id soldier-reference-stills --out-dir workspace/cache/soldier-stills --frames "0,40,80,115,175,215,250,290,335,370,430,470,530,570,591" --format jpeg --quality 95 --repeat-check 0
+python tools/qa/contact_sheet.py workspace/cache/soldier-stills out/reference-contact-sheet.jpg --cols 7
 ```
 
-### 4. Run Full Bounded Async Test Suite (Unit + Integration + Negative)
+### 4. Render Full Preview Sequences (Bounded 2-Worker Parallel) & Encode MP4
 
-**Windows (PowerShell) & bash:**
 ```bash
-npm run test:all
-```
+# Original Soldier 6-second continuous preview (frames 0..179)
+node tools/render/render_parallel.mjs --project-id soldier-reference-preview --out-dir workspace/cache/soldier-preview-frames --start 0 --end 179 --format jpeg --quality 94 --workers 2
 
-Or run Node contract/adapter tests standalone:
-```bash
-npm run test:node
+# New Original 10-second Zombie Proof (exact 300 frames, 0..299)
+node tools/render/render_parallel.mjs --project-id new-zombie-10s --web-dir engine/demos/zombie-10s --out-dir workspace/cache/zombie-10s-frames --start 0 --end 299 --format jpeg --quality 94 --workers 2
 ```
 
 ### 5. Run Linear -6 dB Gated-RMS Audio Mixer (NEW SKILL-Spec CLI)
@@ -77,15 +75,20 @@ npm run test:node
 python tools/audio/mix.py --narration <vo.wav> --music <music.wav> --sfx <sfx.wav> --out <mixed.wav>
 ```
 
-### 6. Verify Any Exported MP4 with FFprobe
+### 6. Run Full Bounded Async Test Suite (Unit + Integration + Regression + Backtest + Negative)
 
-**Windows (PowerShell) & bash:**
 ```bash
-ffprobe -v error -print_format json -show_format -show_streams <video.mp4>
+npm run test:all
+```
+
+### 7. Verify Exported MP4 with FFprobe
+
+```bash
+ffprobe -v error -print_format json -show_format -show_streams out/new-zombie-10s-preview.mp4
 ```
 
 ---
 
 ## Documentation
 
-See [docs/README.md](docs/README.md) for the complete index, [docs/QA_REPORT.md](docs/QA_REPORT.md) for the G01–G20 matrix, and [docs/ENGINE_API_CONTRACT.md](docs/ENGINE_API_CONTRACT.md) for the SHORT-02 Studio UI contract.
+See [docs/README.md](docs/README.md), [docs/QA_REPORT.md](docs/QA_REPORT.md), [docs/ENGINE_PARITY.md](docs/ENGINE_PARITY.md), and [docs/ENGINE_API_CONTRACT.md](docs/ENGINE_API_CONTRACT.md).

@@ -59,10 +59,18 @@ def export_frames_to_mp4(
 
     cmd.extend(
         [
+            "-vf",
+            "scale=in_range=full:out_range=tv,format=yuv420p",
             "-c:v",
             "libx264",
+            "-preset",
+            "medium",
+            "-crf",
+            "18",
             "-pix_fmt",
             "yuv420p",
+            "-color_range",
+            "tv",
             "-r",
             str(int(fps)),
             "-movflags",

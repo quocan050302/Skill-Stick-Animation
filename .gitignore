@@ -19,6 +19,8 @@ __pycache__/
 # Do NOT remove these ignores unless public redistribution rights are explicitly verified.
 _inputs/
 vendor/cartoon-short-kit/
+vendor/upstream/
+engine/web/
 
 # Generated frames, large media, render outputs, and caches
 out/

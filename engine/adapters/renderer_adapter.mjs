@@ -136,17 +136,29 @@ export function createRendererAdapter(projectRoot = PROJECT_ROOT) {
     let mounts;
     let entryPath;
     if (project.mode === 'original_engine') {
-      const check = checkOriginalEngineFiles(projectRoot);
-      if (!check.ready) {
-        throw new EngineInputBlockedError(
-          `Original cartoon-short-kit engine files are missing (${check.missing.length} files). Provide cartoon-short-kit.zip and run ingestion first.`,
-          check.missing
-        );
+      const customWebDir = projectInput.webDir ? path.resolve(projectInput.webDir) : null;
+      if (customWebDir) {
+        if (!fs.existsSync(path.join(customWebDir, 'index.html'))) {
+          throw new EngineInputBlockedError(`Custom webDir missing index.html: ${customWebDir}`, ['index.html']);
+        }
+        mounts = [
+          { prefix: '/three', dir: threeDir },
+          { prefix: '/toonbase', dir: path.join(projectRoot, 'engine', 'web') },
+          { prefix: '', dir: customWebDir },
+        ];
+      } else {
+        const check = checkOriginalEngineFiles(projectRoot);
+        if (!check.ready) {
+          throw new EngineInputBlockedError(
+            `Original cartoon-short-kit engine files are missing (${check.missing.length} files). Provide cartoon-short-kit.zip and run ingestion first.`,
+            check.missing
+          );
+        }
+        mounts = [
+          { prefix: '/three', dir: threeDir },
+          { prefix: '', dir: path.join(projectRoot, 'engine', 'web') },
+        ];
       }
-      mounts = [
-        { prefix: '/three', dir: threeDir },
-        { prefix: '', dir: path.join(projectRoot, 'engine', 'web') },
-      ];
       entryPath = '/index.html';
     } else if (project.mode === 'technical_webgl_smoke') {
       mounts = [
@@ -204,6 +216,7 @@ export function createRendererAdapter(projectRoot = PROJECT_ROOT) {
         return {
           canvasWidth: canvas ? canvas.width : 0,
           canvasHeight: canvas ? canvas.height : 0,
+          totalFrames: typeof window.TOTAL === 'number' ? window.TOTAL : null,
           sceneType: 'ORIGINAL_KIT_ENGINE',
         };
       });
@@ -248,7 +261,7 @@ export function createRendererAdapter(projectRoot = PROJECT_ROOT) {
     }
   }
 
-  async function renderFrame(frameIndex, { format = 'png', jpegQuality = 92 } = {}) {
+  async function renderFrame(frameIndex, { format = 'png', jpegQuality = 95, captureMethod = 'canvas_dataurl', debugMode = null } = {}) {
     if (!state.initialized || !state.page) {
       throw new Error('Renderer is not initialized. Call initializeRenderer() first.');
     }
@@ -256,23 +269,53 @@ export function createRendererAdapter(projectRoot = PROJECT_ROOT) {
       throw new ContractValidationError(`Invalid frameIndex: ${frameIndex}`, 'INVALID_FRAME_INDEX');
     }
 
-    const result = await state.page.evaluate((f) => {
-      return window.renderFrame(f);
-    }, frameIndex);
+    let buffer;
+    let result;
+    if (captureMethod === 'canvas_dataurl') {
+      const mime = format === 'jpeg' ? 'image/jpeg' : 'image/png';
+      const q = format === 'jpeg' ? Math.max(0.1, Math.min(1.0, jpegQuality / 100)) : undefined;
+      const evalRes = await state.page.evaluate(
+        ([f, mimeType, quality, dbg]) => {
+          window.DEBUG_ND = dbg === 'nd' ? 1 : 0;
+          window.DEBUG_E = dbg === 'edge' ? 1 : 0;
+          const r = window.renderFrame(f);
+          const canvas = document.getElementById('c') || document.querySelector('canvas');
+          const dataUrl = quality !== undefined ? canvas.toDataURL(mimeType, quality) : canvas.toDataURL(mimeType);
+          return { r, dataUrl };
+        },
+        [frameIndex, mime, q, debugMode]
+      );
+      result = evalRes.r;
+      if (result && result.ok === false) {
+        throw new Error(`WebGL renderFrame(${frameIndex}) reported error: ${JSON.stringify(result)}`);
+      }
+      if (state.pageErrors.length > 0) {
+        throw new Error(`Page error during frame ${frameIndex}: ${state.pageErrors.join(' | ')}`);
+      }
+      const b64 = evalRes.dataUrl.split(',')[1];
+      buffer = Buffer.from(b64, 'base64');
+    } else {
+      result = await state.page.evaluate(([f, dbg]) => {
+        window.DEBUG_ND = dbg === 'nd' ? 1 : 0;
+        window.DEBUG_E = dbg === 'edge' ? 1 : 0;
+        return window.renderFrame(f);
+      }, [frameIndex, debugMode]);
 
-    if (result && result.ok === false) {
-      throw new Error(`WebGL renderFrame(${frameIndex}) reported error: ${JSON.stringify(result)}`);
-    }
-    if (state.pageErrors.length > 0) {
-      throw new Error(`Page error during frame ${frameIndex}: ${state.pageErrors.join(' | ')}`);
+      if (result && result.ok === false) {
+        throw new Error(`WebGL renderFrame(${frameIndex}) reported error: ${JSON.stringify(result)}`);
+      }
+      if (state.pageErrors.length > 0) {
+        throw new Error(`Page error during frame ${frameIndex}: ${state.pageErrors.join(' | ')}`);
+      }
+
+      const canvas = state.page.locator('canvas').first();
+      const screenshotOpts =
+        format === 'jpeg'
+          ? { type: 'jpeg', quality: jpegQuality }
+          : { type: 'png' };
+      buffer = await canvas.screenshot(screenshotOpts);
     }
 
-    const canvas = state.page.locator('canvas').first();
-    const screenshotOpts =
-      format === 'jpeg'
-        ? { type: 'jpeg', quality: jpegQuality }
-        : { type: 'png' };
-    const buffer = await canvas.screenshot(screenshotOpts);
     const dims = parseImageDimensions(buffer);
     if (!dims || dims.width !== RENDER_CONTRACT.width || dims.height !== RENDER_CONTRACT.height) {
       throw new Error(

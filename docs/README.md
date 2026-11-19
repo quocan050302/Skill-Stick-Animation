@@ -1,18 +1,14 @@
 # SHORT-01 Documentation Index
 
-This directory contains forensic audit records, dependency pinning, architecture, engine parity tracking, the SHORT-02 Engine API contract, QA reports, and immutable per-run execution logs.
-
-## Core Documents
-
-- [SOURCE_AUDIT.md](SOURCE_AUDIT.md) — Phase 0 forensic inventory & function-level responsibility map (currently `INPUT_BLOCKED` for missing kit archive)
-- [SOURCE_FIDELITY_MANIFEST.json](SOURCE_FIDELITY_MANIFEST.json) — Machine-readable SHA-256 & byte-preservation manifest
-- [DEPENDENCIES.md](DEPENDENCIES.md) — Pinned versions, licenses, checksums/lockfiles, and cross-platform setup rules
+- [SOURCE_AUDIT.md](SOURCE_AUDIT.md) — Phase 0 forensic inventory, SKILL vs kit inconsistencies, & audited function responsibility table
+- [SOURCE_FIDELITY_MANIFEST.json](SOURCE_FIDELITY_MANIFEST.json) — Machine-readable CRC32 + SHA-256 byte-preservation manifest (14/14 verified)
+- [DEPENDENCIES.md](DEPENDENCIES.md) — Pinned versions, commit SHAs (`three@0.160.0`, `claude-animated-shorts@e3b817b6`, `playwright@1.65.1`), licenses, and Node v26 compatibility fix
 - [ARCHITECTURE.md](ARCHITECTURE.md) — Pipeline call graph & function-level accountability table
-- [ENGINE_PARITY.md](ENGINE_PARITY.md) — Separate evaluation of A (Source Byte Fidelity), B (Dependency Reconstruction), C (Rendered Output Parity), D (Audio Contract Parity), and E (Video/Export Contract Parity)
+- [ENGINE_PARITY.md](ENGINE_PARITY.md) — Separate tracks A–E parity evaluation
 - [ENGINE_API_CONTRACT.md](ENGINE_API_CONTRACT.md) — Authoritative 9:16 renderer contract for SHORT-02 Studio UI
-- [QA_REPORT.md](QA_REPORT.md) — Objective QA evidence, gate matrix G01–G20, and known blockers
-- [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md) — Release & publication verification checklist
+- [QA_REPORT.md](QA_REPORT.md) — Objective QA evidence & G01–G20 release gate matrix
+- [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md) — Publication & release verification checklist
 
-## Per-Run Logs
-
-- [agent-runs/SHORT-01-20261119-01/README.md](agent-runs/SHORT-01-20261119-01/README.md) — Immutable audit folder for the initial SHORT-01 execution run
+## Immutable Per-Run Audit Folders
+- [agent-runs/SHORT-01-20261119-01/README.md](agent-runs/SHORT-01-20261119-01/README.md) — Run 1 (initial infrastructure & WebGL2 smoke while original kit ZIP was missing)
+- [agent-runs/SHORT-01-20261119-02/README.md](agent-runs/SHORT-01-20261119-02/README.md) — Run 2 (full ingestion of `cartoon-short-kit.zip` + `SKILL.md`, original Soldier baseline + preview MP4, audio/timing audit, and new 10s 300-frame zombie proof)
