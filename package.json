@@ -1,0 +1,22 @@
+{
+  "name": "skill-stick-animation",
+  "version": "0.1.0-short01",
+  "private": true,
+  "type": "module",
+  "description": "Independent 2D-character + 3D-world, 9:16 vertical short video rendering project (SHORT-01 baseline)",
+  "engines": {
+    "node": ">=22.6.0"
+  },
+  "scripts": {
+    "setup:verify": "node tools/setup/safe_setup.mjs",
+    "audit:kit": "python tools/setup/audit_kit.py",
+    "smoke:webgl": "node tools/render/webgl_smoke.mjs",
+    "test:node": "node --test tests/unit/test_contract_and_adapter.mjs",
+    "test:all": "python tests/run_all.py",
+    "serve:api": "node app/server/api_server.mjs"
+  },
+  "dependencies": {
+    "playwright": "1.65.1",
+    "three": "0.160.0"
+  }
+}

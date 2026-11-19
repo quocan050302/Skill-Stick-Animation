@@ -1,0 +1,26 @@
+{
+  "status": "INPUT_BLOCKED",
+  "generated_at_utc": "2026-11-19T01:38:08.707038+00:00",
+  "missing_required_inputs": [
+    "D:\\Project_github\\Stick-Animation\\_inputs\\cartoon-short-kit.zip",
+    "D:\\Project_github\\Stick-Animation\\_inputs\\Pasted markdown.md"
+  ],
+  "expected_zip_entries": [
+    "cartoon-short-kit/README.md",
+    "cartoon-short-kit/engine/index.html",
+    "cartoon-short-kit/engine/main.js",
+    "cartoon-short-kit/engine/motion.js",
+    "cartoon-short-kit/engine/paint.js",
+    "cartoon-short-kit/engine/roman.js",
+    "cartoon-short-kit/example/soldier/stills.jpg",
+    "cartoon-short-kit/example/soldier/story.js",
+    "cartoon-short-kit/example/soldier/audio.py",
+    "cartoon-short-kit/tools/setup.sh",
+    "cartoon-short-kit/tools/timing.py",
+    "cartoon-short-kit/tools/render.mjs",
+    "cartoon-short-kit/tools/sheet.py",
+    "cartoon-short-kit/tools/finish.sh"
+  ],
+  "license_gate_g05": "BLOCKED",
+  "files": []
+}

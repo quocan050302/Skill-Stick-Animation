@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>SHORT-01 WebGL2 + Three.js 0.160.0 Technical Smoke Test</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      background: #10141c;
+    }
+    canvas {
+      display: block;
+      width: 1080px;
+      height: 1920px;
+    }
+  </style>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "/three/build/three.module.js"
+      }
+    }
+  </script>
+</head>
+<body>
+  <canvas id="stage" width="1080" height="1920"></canvas>
+  <script type="module">
+    /**
+     * TECHNICAL SMOKE TEST ONLY (G07 verification).
+     * Provenance: NEW IMPLEMENTATION — NOT the original cartoon-short-kit Soldier renderer.
+     * Exercises Three.js 0.160.0 WebGL2 context, MeshToonMaterial, directional shadows,
+     * offscreen WebGLRenderTarget + DepthTexture, alpha-tested 2D canvas actor billboard card,
+     * and deterministic frame-index rendering via window.renderFrame(f).
+     */
+    import * as THREE from 'three';
+
+    const W = 1080;
+    const H = 1920;
+    const canvas = document.getElementById('stage');
+
+    const renderer = new THREE.WebGLRenderer({
+      canvas,
+      antialias: true,
+      preserveDrawingBuffer: true,
+      powerPreference: 'high-performance',
+    });
+    renderer.setPixelRatio(1);
+    renderer.setSize(W, H, false);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+    const gl = renderer.getContext();
+    const debugExt = gl.getExtension('WEBGL_debug_renderer_info');
+    const glMeta = {
+      isWebGL2: renderer.capabilities.isWebGL2,
+      maxTextureSize: renderer.capabilities.maxTextureSize,
+      vendor: debugExt ? gl.getParameter(debugExt.UNMASKED_VENDOR_WEBGL) : gl.getParameter(gl.VENDOR),
+      renderer: debugExt ? gl.getParameter(debugExt.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER),
+      version: gl.getParameter(gl.VERSION),
+      threeRevision: THREE.REVISION,
+      sceneType: 'TECHNICAL_WEBGL_SMOKE_ONLY',
+    };
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x8ec5e8);
+    scene.fog = new THREE.Fog(0x8ec5e8, 12, 34);
+
+    const camera = new THREE.PerspectiveCamera(42, W / H, 0.1, 80);
+
+    const hemi = new THREE.HemisphereLight(0xf6f9ff, 0x566448, 0.9);
+    scene.add(hemi);
+
+    const sun = new THREE.DirectionalLight(0xfff1d6, 1.45);
+    sun.position.set(6, 10, 7);
+    sun.castShadow = true;
+    sun.shadow.mapSize.set(1024, 1024);
+    sun.shadow.camera.near = 1;
+    sun.shadow.camera.far = 30;
+    scene.add(sun);
+
+    // Deterministic 3-step toon gradient texture
+    const gradData = new Uint8Array([70, 70, 70, 255, 165, 165, 165, 255, 255, 255, 255, 255]);
+    const gradTex = new THREE.DataTexture(gradData, 3, 1, THREE.RGBAFormat);
+    gradTex.minFilter = THREE.NearestFilter;
+    gradTex.magFilter = THREE.NearestFilter;
+    gradTex.needsUpdate = true;
+
+    const ground = new THREE.Mesh(
+      new THREE.PlaneGeometry(40, 40),
+      new THREE.MeshToonMaterial({ color: 0x6b9952, gradientMap: gradTex })
+    );
+    ground.rotation.x = -Math.PI / 2;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    const pillarMat = new THREE.MeshToonMaterial({ color: 0xd8c9ae, gradientMap: gradTex });
+    const pillars = [];
+    for (let i = 0; i < 4; i++) {
+      const m = new THREE.Mesh(new THREE.BoxGeometry(1.1, 2.8 + i * 0.4, 1.1), pillarMat);
+      m.position.set(-3.2 + i * 2.1, (2.8 + i * 0.4) / 2, -4.5 - (i % 2) * 1.4);
+      m.castShadow = true;
+      m.receiveShadow = true;
+      scene.add(m);
+      pillars.push(m);
+    }
+
+    // 2D alpha-tested canvas billboard card (technical pipeline smoke only)
+    const cardCanvas = document.createElement('canvas');
+    cardCanvas.width = 256;
+    cardCanvas.height = 384;
+    const cctx = cardCanvas.getContext('2d');
+    const cardTex = new THREE.CanvasTexture(cardCanvas);
+    cardTex.colorSpace = THREE.SRGBColorSpace;
+    const actorCard = new THREE.Mesh(
+      new THREE.PlaneGeometry(1.5, 2.25),
+      new THREE.MeshBasicMaterial({ map: cardTex, alphaTest: 0.5, side: THREE.DoubleSide })
+    );
+    actorCard.position.set(0, 1.15, 0);
+    actorCard.castShadow = true;
+    scene.add(actorCard);
+
+    function drawSmokeMarker(f) {
+      cctx.clearRect(0, 0, 256, 384);
+      const bob = Math.sin(f * 0.25) * 6;
+      cctx.lineWidth = 10;
+      cctx.strokeStyle = '#2a1a2e';
+      cctx.fillStyle = '#fff9f0';
+      // Simple geometric calibration marker (not claiming kit character art)
+      cctx.beginPath();
+      cctx.arc(128, 108 + bob, 56, 0, Math.PI * 2);
+      cctx.fill();
+      cctx.stroke();
+
+      cctx.fillStyle = '#d9534f';
+      cctx.beginPath();
+      cctx.roundRect(82, 174 + bob, 92, 128, 22);
+      cctx.fill();
+      cctx.stroke();
+
+      // Frame indicator bars
+      cctx.fillStyle = '#2a1a2e';
+      cctx.font = 'bold 28px monospace';
+      cctx.textAlign = 'center';
+      cctx.fillText(`F:${String(f).padStart(4, '0')}`, 128, 118 + bob);
+      cardTex.needsUpdate = true;
+    }
+
+    // Exercise offscreen RenderTarget + DepthTexture capability required by ink/DOF pipeline
+    const rt = new THREE.WebGLRenderTarget(W, H, {
+      minFilter: THREE.LinearFilter,
+      magFilter: THREE.LinearFilter,
+      depthTexture: new THREE.DepthTexture(W, H),
+    });
+
+    window.getSmokeCapabilities = () => ({
+      ...glMeta,
+      renderTargetSupported: Boolean(rt && rt.depthTexture),
+      canvasWidth: canvas.width,
+      canvasHeight: canvas.height,
+    });
+
+    window.renderFrame = (frameIndex) => {
+      const f = Number(frameIndex) || 0;
+      const angle = f * 0.045;
+      camera.position.set(Math.sin(angle) * 5.8, 2.35 + Math.sin(f * 0.08) * 0.18, Math.cos(angle) * 5.8);
+      camera.lookAt(0, 1.25, -0.5);
+
+      actorCard.position.x = Math.sin(f * 0.12) * 0.7;
+      actorCard.lookAt(camera.position.x, actorCard.position.y, camera.position.z);
+      drawSmokeMarker(f);
+
+      // Verify offscreen depth+color pass succeeds without WebGL error
+      renderer.setRenderTarget(rt);
+      renderer.render(scene, camera);
+      renderer.setRenderTarget(null);
+      renderer.render(scene, camera);
+
+      const glErr = gl.getError();
+      return {
+        frame: f,
+        width: canvas.width,
+        height: canvas.height,
+        glError: glErr,
+        ok: glErr === gl.NO_ERROR,
+      };
+    };
+
+    window.ready = true;
+  </script>
+</body>
+</html>
