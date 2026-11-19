@@ -747,7 +747,19 @@ export async function startApiServer({
     }
   });
 
-  await new Promise((resolve) => server.listen(port, '127.0.0.1', resolve));
+  await new Promise((resolve, reject) => {
+    const onErr = (err) => {
+      server.off('listening', onListening);
+      reject(err);
+    };
+    const onListening = () => {
+      server.off('error', onErr);
+      resolve();
+    };
+    server.once('error', onErr);
+    server.once('listening', onListening);
+    server.listen(port, '127.0.0.1');
+  });
   const address = server.address();
   actualPort = address.port;
 
